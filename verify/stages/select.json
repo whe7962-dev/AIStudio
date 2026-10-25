@@ -1,0 +1,123 @@
+{
+  "components": [
+    {
+      "id": "s01",
+      "name": "Agent Loop",
+      "decision": "必选",
+      "reason": "一切基础：循环 + 工具（一切基础，恒选）",
+      "feature": ""
+    },
+    {
+      "id": "s02",
+      "name": "工具系统",
+      "decision": "必选",
+      "reason": "需要调用外部系统/API/数据源（一切基础，恒选）",
+      "feature": ""
+    },
+    {
+      "id": "s03",
+      "name": "权限系统",
+      "decision": "必选",
+      "reason": "触碰用户商品图、参考图、生成物等隐私敏感素材，且含导出写盘与归档动作，红线1规定只有用户显式勾选后才可上传。",
+      "feature": "destructive_ops"
+    },
+    {
+      "id": "s04",
+      "name": "钩子系统",
+      "decision": "必选",
+      "reason": "FR12 隐私保护要求「所有网络行为可审计」，另有 job journal 记录任务全过程。",
+      "feature": "audit_needed"
+    },
+    {
+      "id": "s05",
+      "name": "任务规划",
+      "decision": "必选",
+      "reason": "单次交付是 10 步电商链路（新建 SKU 至归档复用），含优先级队列、step 边界抢占、checkpoint 与崩溃续跑，批量任务需汇报进展并支持中断。",
+      "feature": "multi_step"
+    },
+    {
+      "id": "s06",
+      "name": "子 Agent",
+      "decision": "放弃",
+      "reason": "项目状态由 DAG 项目图加内容寻址资产库承载、单执行道串行执行，没有需要塞进模型上下文的大规模并行探索型子任务。",
+      "feature": "context_heavy"
+    },
+    {
+      "id": "s07",
+      "name": "技能加载",
+      "decision": "放弃",
+      "reason": "领域知识仅为 5 个电商平台的渠道规格表与模板，且 FR3 明确写成可编辑配置，不属于需要按需加载的庞大知识库。",
+      "feature": "large_knowledge"
+    },
+    {
+      "id": "s08",
+      "name": "上下文压缩",
+      "decision": "必选",
+      "reason": "单 SKU 默认 4 张草稿 × 5 平台 × 多 SKU 的批任务，叠加 job journal 逐任务记录与批次 QA 报告，单次运行产出与日志量很大。",
+      "feature": "long_sessions"
+    },
+    {
+      "id": "s09",
+      "name": "记忆系统",
+      "decision": "必选",
+      "reason": "主流程末端为「归档复用」，配合项目图自动保存与撤销历史，需跨会话保留既有 SKU 的锚点、模板与生成决策。",
+      "feature": "cross_session_memory"
+    },
+    {
+      "id": "s10",
+      "name": "任务系统",
+      "decision": "必选",
+      "reason": "FR5 明确 job journal + 崩溃续跑 + 每 N 步 checkpoint，任务恢复率目标 100%，目标与进度必须持久化并可续跑。",
+      "feature": "persistent_goals"
+    },
+    {
+      "id": "s11",
+      "name": "后台任务",
+      "decision": "必选",
+      "reason": "终稿单图 p95 ≤ 2min、单 SKU × 5 平台整体 p95 ≤ 30min，采用草稿/终稿双轨与后台渲染，不阻塞主流程。",
+      "feature": "slow_operations"
+    },
+    {
+      "id": "s12",
+      "name": "定时调度",
+      "decision": "放弃",
+      "reason": "闭环由用户手动「新建 SKU」触发批任务，输入全文无定时或周期自动触发的需求。",
+      "feature": "scheduled"
+    },
+    {
+      "id": "s13",
+      "name": "Agent 团队",
+      "decision": "放弃",
+      "reason": "调度策略明确为「单执行道 + 优先级队列、交互插队批任务、step 边界抢占」，不并行执行，也没有多工作区隔离。",
+      "feature": "parallel_isolated"
+    },
+    {
+      "id": "s14",
+      "name": "MCP 插件",
+      "decision": "必选",
+      "reason": "FR13 平台对接（可插拔）：需对接设备/OS 级账号、授权、配额与跨应用算力调度，另 FR11 需推理 provider 抽象。",
+      "feature": "external_ecosystem"
+    },
+    {
+      "id": "s15",
+      "name": "集成 Harness",
+      "decision": "必选",
+      "reason": "第一版已选 8 个可选组件（s03, s04, s05, s08, s09, s10, s11, s14），需归一到单一循环",
+      "feature": ""
+    },
+    {
+      "id": "s16",
+      "name": "工作流运行时",
+      "decision": "放弃",
+      "reason": "电商链路虽为固定阶段序列，但含模型临场判断分支：自动 QA、保真度评分判定是否重算、OOM/失败降级链选择小模型或非生成式管线。",
+      "feature": "fixed_orchestration"
+    },
+    {
+      "id": "s17",
+      "name": "目标闭环",
+      "decision": "放弃",
+      "reason": "FR6 明确导出前需用户确认，闭环终点由人判定；自动 QA 与保真度评分只用于质量打分，不负责判定任务已完成。",
+      "feature": "auto_completion"
+    }
+  ]
+}

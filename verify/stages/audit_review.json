@@ -1,0 +1,41 @@
+{
+  "ok": false,
+  "issues": [
+    {
+      "component": "s01",
+      "problem": "判为「缺失」站不住。差距表 evidence 为空，但证据摘要里 s04 命中 aiside/dispatch.py:1/15/26/30/71，产品意图 facts 也明确写有「dispatch.py 说明中『loop + hooks + 权限 + 重试』」，说明存在循环线索。按复核标准第 2 条，应改判「薄弱」并补充 dispatch.py 的具体行证据；改造为：需人工确认该 loop 是否属于 Agent 循环（模型决策 + 工具调用），还是确定性管线调度。",
+      "severity": "high"
+    },
+    {
+      "component": "s08",
+      "problem": "理由中「单 SKU 默认 4 张草稿 × 5 平台 × 多 SKU」「FR5」在输入里没有出处，属于未溯源的数字与编号。产品意图描述的核心闭环是 pipeline.py 确定性顺序跑通、以 job 为单位、过程状态写入 job journal，没有证据表明单次运行会累积需要压缩的长上下文（没有 LLM 对话历史线索）。因此判为 P0 缺少意图依据，建议改为「待确认」或「可选」，不能判为 P0。",
+      "severity": "high"
+    },
+    {
+      "component": "s09",
+      "problem": "判为「缺失」与证据不符：证据摘要 s12 命中 aiside/workspace.py:17/39/45/123/148（资产库、项目图），s11 命中 core/job_journal.py 与 workspace.py，说明已有跨运行的状态持久化线索，应改判「薄弱」。另外理由中的「归档复用」「撤销历史」「FR5」在输入中找不到出处；其中「撤销历史」输入未提及，「归档复用」是把资产库当成记忆的引申，需标注待确认。",
+      "severity": "high"
+    },
+    {
+      "component": "s10",
+      "problem": "理由中「FR5」「崩溃续跑」「每 N 步 checkpoint」「任务恢复率目标 100%」均无出处，指标数值是编造的。同时证据摘要 s11 命中 aiside/core/job_journal.py:14/23/55、workspace.py:122/128，属于任务状态持久化线索，因此「缺失」应改判「薄弱」。P0 的依据需要按产品意图重新论证：意图只写了「进度写项目图与 job journal」，没有给恢复率目标。",
+      "severity": "high"
+    },
+    {
+      "component": "s14",
+      "problem": "理由引用的 FR11、FR13 在输入中不存在。更重要的是，这与产品意图的边界冲突：意图明确「默认不出网，网络出口白名单只放行 DEMO_BASE_URL」「无云端兜底，正式版只接本地推理」。MCP 外部插件对接缺乏意图依据，不应判为 P0，建议降为「可选」或「待确认」，并说明本地 provider 抽象（stub/seedream）不构成 MCP 需求。",
+      "severity": "high"
+    },
+    {
+      "component": "s15",
+      "problem": "理由称「第一版已选 8 个可选组件（s03, s04, s05, s08, s09, s10, s11, s14）」，与差距表不一致：差距表里被列为差距的只有 s08、s09、s10、s14（缺失）和 s02（薄弱），s03/s04/s05/s11 并未作为差距列出。集成结论需按实际差距表重算；另外 s15 自身 evidence 为空，应说明「未扫描到任何线索」的具体扫描范围。",
+      "severity": "medium"
+    },
+    {
+      "component": "s02",
+      "problem": "结论「薄弱」方向可以接受，但证据只有一条 aiside/pipeline.py:43 的函数签名，不足以支撑工具系统的判断。证据摘要中 s03（aiside/api.py 的 /tools/{tool} 路由）与 s04（dispatch.py 的权限与 hooks）都属工具系统线索，应补入证据表。另外优先级 P1 与「工具系统是恒选基础」以及产品意图列出的 8 个领域工具不符，宜上调为 P0。",
+      "severity": "medium"
+    }
+  ],
+  "summary": "多条结论与证据摘要或产品意图不一致：s01/s09/s10 的证据表外已有命中线索（dispatch.py 循环、workspace.py 项目图与资产库、core/job_journal.py），仍被写成「缺失」，应改判「薄弱」；s08/s14 的理由引用了输入中不存在的 FR 编号与量化指标，且 s14 与「默认不出网、无云端兜底」的边界相冲突，不应判 P0。s15 的理由引用的组件清单与差距表自相矛盾，s02 证据过少且优先级偏低，都需要修正后再交付。"
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "job_id": "cd7c4f84ff",
+  "status": "success",
+  "provider": "seedream",
+  "model": "doubao-seedream-5-0-flash-260915",
+  "created_at": 1792696256.653287,
+  "params": {
+    "prompt": "商品卖点：黑色双肩背包，保留背包原有外形、拉链、口袋、肩带与材质，纯色背景，专业棚拍，柔光，商品居中，光线：自然光，风格：写实，严格保持商品形状、颜色、logo、材质不变，避免：额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+    "scene": "studio",
+    "count": 1,
+    "strength": 0.75,
+    "lock_product": true,
+    "negative_prompt": "额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+    "size": "1024x1024",
+    "sku": "DEMO-BAG",
+    "seed_base": 1186746741
+  },
+  "sku": "DEMO-BAG",
+  "prompt": "商品卖点：黑色双肩背包，保留背包原有外形、拉链、口袋、肩带与材质，纯色背景，专业棚拍，柔光，商品居中，光线：自然光，风格：写实，严格保持商品形状、颜色、logo、材质不变，避免：额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+  "negative_prompt": "额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+  "reference_strength": 0.75,
+  "size": "1024x1024",
+  "next_seed": 1186746742,
+  "count": 1,
+  "files": [
+    "DEMO-BAG_studio_1_1024x1024.jpg"
+  ],
+  "images": [
+    {
+      "id": "img_0",
+      "status": "success",
+      "source": "seedream",
+      "strength": 0.75,
+      "seed": 1186746741,
+      "created_at": 1792696263.8962219,
+      "filename": "DEMO-BAG_studio_1_1024x1024.jpg"
+    }
+  ]
+}

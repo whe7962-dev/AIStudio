@@ -1,0 +1,20 @@
+# 运行产物与本地配置
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 密钥与本地环境：真实 key 永不入库
+.env
+demo-api.env
+../demo-api.env
+
+# 运行时数据（项目图、资产库、journal、导出物）
+data/
+outputs/
+tmp/
+
+# 系统文件
+.DS_Store

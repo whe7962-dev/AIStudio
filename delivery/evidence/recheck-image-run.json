@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "job_id": "4ce563bdd9",
+  "status": "success",
+  "provider": "seedream",
+  "model": "doubao-seedream-5-0-flash-260915",
+  "created_at": 1792698416.0259352,
+  "params": {
+    "prompt": "商品卖点：黑色双肩包，保持包体、拉链、提手和外侧口袋的形状，纯色背景，专业棚拍，柔光，商品居中，场景：浅灰色棚拍背景，商品完整居中，光线：自然光，风格：写实，严格保持商品形状、颜色、logo、材质不变，避免：额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+    "scene": "studio",
+    "count": 1,
+    "strength": 0.75,
+    "lock_product": true,
+    "negative_prompt": "额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+    "size": "1024x1024",
+    "sku": "VERIFY-BAG-1023",
+    "seed_base": 597761119
+  },
+  "sku": "VERIFY-BAG-1023",
+  "prompt": "商品卖点：黑色双肩包，保持包体、拉链、提手和外侧口袋的形状，纯色背景，专业棚拍，柔光，商品居中，场景：浅灰色棚拍背景，商品完整居中，光线：自然光，风格：写实，严格保持商品形状、颜色、logo、材质不变，避免：额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+  "negative_prompt": "额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+  "reference_strength": 0.75,
+  "size": "1024x1024",
+  "next_seed": 597761120,
+  "count": 1,
+  "files": [
+    "VERIFY-BAG-1023_studio_1_1024x1024.jpg"
+  ],
+  "images": [
+    {
+      "id": "img_0",
+      "status": "success",
+      "source": "seedream",
+      "strength": 0.75,
+      "seed": 597761119,
+      "created_at": 1792698422.4736168,
+      "filename": "VERIFY-BAG-1023_studio_1_1024x1024.jpg"
+    }
+  ]
+}

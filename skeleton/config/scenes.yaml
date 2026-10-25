@@ -1,0 +1,14 @@
+# 场景模板（最小 demo 用，可编辑）
+scenes:
+  - id: white_bg
+    name: 纯白底
+    prompt: 纯白背景，商品主体居中，柔和棚拍光，简洁电商主图
+  - id: wood_table
+    name: 原木桌面
+    prompt: 原木桌面场景，自然光，浅景深，商品居中
+  - id: marble
+    name: 大理石台面
+    prompt: 白色大理石台面，高级质感，柔和光影，商品居中
+  - id: green
+    name: 绿植背景
+    prompt: 柔和绿植背景，清新自然，商品居中

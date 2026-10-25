@@ -1,0 +1,38 @@
+# 场景预设（Phase 1 R3：≥6 个，带缩略图）
+presets:
+  - id: studio
+    name: 纯色棚拍
+    bg: 纯色背景，专业棚拍
+    light: 柔光
+    compose: 商品居中
+    color: "#e8e8ee"
+  - id: home
+    name: 家居
+    bg: 现代家居室内，木质家具
+    light: 自然光
+    compose: 商品居中偏下
+    color: "#d8c4a0"
+  - id: outdoor
+    name: 户外
+    bg: 户外自然场景，草地与天空
+    light: 自然光
+    compose: 商品居中
+    color: "#bcd6a0"
+  - id: festival
+    name: 节日
+    bg: 节日氛围装饰背景
+    light: 暖光
+    compose: 商品居中
+    color: "#e0b0a0"
+  - id: minimal
+    name: 极简
+    bg: 极简风格，大面积留白
+    light: 柔光
+    compose: 商品居中
+    color: "#f0f0f0"
+  - id: street
+    name: 街景
+    bg: 城市街角背景
+    light: 自然光
+    compose: 商品居中
+    color: "#a0b8c8"

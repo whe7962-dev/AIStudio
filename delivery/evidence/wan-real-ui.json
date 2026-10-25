@@ -1,0 +1,28 @@
+{
+  "id": "2f83c0af-1a14-459f-8bba-ba9f718070e7",
+  "project": "演示验收项目",
+  "shot": 2,
+  "prompt": "暖色灯光下的木桌特写，一只成年人的手将未拆开的信缓缓推到桌面中央。。运镜：缓推。保持首帧人物和场景一致，动作自然，无字幕。",
+  "model": "wan3.0-video-prime",
+  "status": "success",
+  "generated_by_model": true,
+  "created_at": 1792701069.270249,
+  "duration": 5,
+  "resolution": "480P",
+  "has_keyframe": true,
+  "request_id": "d1bde7a4-fac9-99d2-9b3f-57dc9cc52ad1",
+  "task_id": "61f509cc-bc60-40cf-8cbc-4142f496e3f1",
+  "provider_status": "SUCCEEDED",
+  "updated_at": 1792701115.0617769,
+  "error": null,
+  "usage": {
+    "video_count": 1,
+    "duration": 5.0,
+    "SR": 480,
+    "output_video_duration": 5.0,
+    "input_video_duration": 0.0,
+    "fps": 30,
+    "ratio": "16:9"
+  },
+  "completed_at": 1792701115.702687
+}

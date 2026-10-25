@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>商品广告 · 画布设计稿</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="./"><span class="brand-icon">a</span> AIStudio</a><nav aria-label="产品"><a href="http://127.0.0.1:8765" target="_blank" rel="noopener">电商图片 ↗</a><span class="active">商品广告</span></nav><span class="project-name">通勤背包 / 广告创作</span><span class="prototype">交互设计稿</span><button id="reset" class="quiet">重新体验</button></header>
+<div class="app">
+ <aside class="assets">
+  <div class="aside-title">项目素材 <span>01</span></div>
+  <div class="asset-image"><img src="assets/product.jpg" alt="黑色通勤背包商品参考"></div>
+  <div class="asset-name">黑色通勤背包 <span class="small-tag">共用</span></div>
+  <p class="muted">每个场景都沿用这件商品。</p>
+  <div class="divider"></div>
+  <div class="aside-title small">固定外观 <span class="lock">▣</span></div>
+  <ul class="rules"><li>黑色包身与原有轮廓</li><li>口袋、拉链及肩带结构</li><li>不添加不存在的品牌标识</li></ul>
+  <details><summary>人物参考 <span>可选</span></summary><p class="muted">本示例不出镜。需要人物时，在这里设定一份共用参考。</p></details>
+  <details><summary>广告规则与提示词</summary><p class="muted">默认使用「主体 → 细节 → 收尾」。只表达已确认的卖点；不自动编造容量、材质或功效。</p></details>
+  <div class="asset-foot"><span class="dot"></span> 示例项目 · 自动保存<br><small>本稿仅演示交互，不调用模型。</small></div>
+ </aside>
+ <main>
+  <div class="canvas-top"><div><h1>让一个想法，长成一支广告。</h1><p id="status">先看场景安排，满意后再生成画面。</p></div><div class="canvas-actions"><button id="video-settings">视频设置与规则</button><button id="overview" class="quiet">⌖ 全览</button></div></div>
+  <section id="viewport" aria-label="广告创作画布"><div class="canvas-hint">拖动画面整理位置 · 拖动空白平移</div><div id="world"><svg id="wires" aria-hidden="true"></svg><div id="nodes"></div></div><div class="zoom"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-label">100%</span><button id="zoom-in" aria-label="放大">+</button></div><div id="selection-tools" hidden></div></section>
+  <section class="composer-wrap"><div class="review-bar"><span id="review-status"></span><button id="review" class="primary"></button></div><div class="composer"><div class="composer-context"><span id="context">整个广告</span><button id="clear-selection" hidden aria-label="取消画面选择">×</button><span class="context-note">商品和已确认的要求会自动沿用</span></div><div class="input-row"><textarea id="intent" aria-label="广告需求或修改意见" rows="2" placeholder="描述你的广告想法，或选中一张画面说说想怎么改…">给这款黑色背包做一支简洁的商品广告，展示整体外观和前袋细节，最后定格商品。不要人物。</textarea><button id="send" class="send" aria-label="提交想法">↑</button></div><div class="intent-settings" role="group" aria-label="创作意图的视频规格"><label>尺寸<select id="quick-ratio"><option value="16:9">16:9 横屏</option><option value="9:16">9:16 竖屏</option><option value="1:1">1:1 方形</option></select></label><label>分辨率<select id="quick-resolution"><option value="480P">480P</option><option value="720P">720P</option><option value="1080P">1080P</option></select></label><label>时长<select id="quick-duration"><option value="15">15 秒</option><option value="30">30 秒</option></select></label><span>提交前选好，全片沿用</span></div><div class="composer-meta"><span>横屏 16:9 · 3 个场景 · 示例素材</span><span>关键帧确认后，才进入视频</span></div></div></section>
+ </main>
+</div>
+<div id="toast" role="status" hidden></div>
+<dialog id="dialog"><div class="dialog-head"><div><span class="eyebrow" id="dialog-label">画面预览</span><h2 id="dialog-title"></h2></div><button id="close-dialog" class="quiet" aria-label="关闭">×</button></div><div id="dialog-body"></div><div id="dialog-actions"></div></dialog>
+<script src="settings.js"></script><script src="app.js"></script>
+</body></html>

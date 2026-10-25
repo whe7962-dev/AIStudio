@@ -1,0 +1,26 @@
+[
+  {
+    "width": 1280,
+    "scrollWidth": 1265,
+    "tab": "imageTab",
+    "nodes": 12
+  },
+  {
+    "width": 1280,
+    "scrollWidth": 1265,
+    "tab": "videoTab",
+    "nodes": 12
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1425,
+    "tab": "imageTab",
+    "nodes": 12
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1425,
+    "tab": "videoTab",
+    "nodes": 12
+  }
+]

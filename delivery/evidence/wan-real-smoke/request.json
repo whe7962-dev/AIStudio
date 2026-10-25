@@ -1,0 +1,14 @@
+{
+  "model": "wan3.0-video-prime",
+  "input": {
+    "prompt": "电影写实风格，暖色灯光下的木桌特写。一只成年人的手把一封未拆开的信缓缓推到桌面中央，手离开画面，镜头缓慢推进到信封。动作自然，单一连续镜头，无字幕。"
+  },
+  "parameters": {
+    "duration": 5,
+    "resolution": "480P",
+    "ratio": "16:9",
+    "audio": false,
+    "prompt_extend": false,
+    "watermark": true
+  }
+}

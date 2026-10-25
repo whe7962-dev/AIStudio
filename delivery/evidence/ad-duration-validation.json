@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-24",
+  "presets": [
+    15,
+    30,
+    60
+  ],
+  "custom_total_seconds": [
+    6,
+    90
+  ],
+  "scene_seconds": [
+    2,
+    30
+  ],
+  "allocation_example": {
+    "total": 20,
+    "scenes": [
+      7,
+      7,
+      6
+    ]
+  },
+  "backend_tests_passed": 35,
+  "duration_unit_tests_passed": 2,
+  "browser_checks": [
+    "quick_to_modal_sync",
+    "modal_to_quick_sync",
+    "refresh_persistence",
+    "blank_range_fraction_rejected",
+    "invalid_modal_save_disabled",
+    "preset_clears_invalid_input",
+    "1280_and_1440_no_overflow"
+  ],
+  "paid_model_calls": 0,
+  "quality_status": "新增时长的实际模型效果待验收",
+  "screenshot": "skeleton/shots/ad-custom-duration-1280.png"
+}

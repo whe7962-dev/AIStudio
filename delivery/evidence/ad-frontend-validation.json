@@ -1,0 +1,40 @@
+{
+  "scope": "商品广告正式前端接入，隔离验证",
+  "paid_model_calls": 0,
+  "tests_passed": 25,
+  "frontend_entry": "http://127.0.0.1:8765/",
+  "design_entry": "http://127.0.0.1:8770/",
+  "fixture_requests": {
+    "frame_attempts": 5,
+    "intentional_frame_failures": 1,
+    "candidate_frames": 1,
+    "video_tasks": 3,
+    "video_parameters": {
+      "ratio": "9:16",
+      "resolution": "720P",
+      "duration": 5
+    },
+    "same_product_reference": true
+  },
+  "fixture_output": {
+    "width": 720,
+    "height": 1280,
+    "duration": 1.4,
+    "downloaded": true
+  },
+  "checks": [
+    "失败后手动重试",
+    "局部修改比较和采用",
+    "整组确认后视频生成",
+    "本地合并与导出",
+    "刷新恢复",
+    "双tab切换保留状态",
+    "不改场景时复用结果",
+    "正式页1280/1440无横向溢出"
+  ],
+  "limitations": [
+    "真实商品保真和跨场景一致性尚未验收",
+    "新增规格组合尚未真实模型逐项验证",
+    "无声直切，不含后期字幕或配音"
+  ]
+}

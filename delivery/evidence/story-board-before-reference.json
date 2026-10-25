@@ -1,0 +1,48 @@
+{
+  "revision": 2,
+  "story": "",
+  "roles": [],
+  "shots": [
+    {
+      "id": 1,
+      "title": "镜头1",
+      "description": "车站窗边，两位成年旧友重逢，欲言又止。",
+      "camera": "固定",
+      "role_ids": [],
+      "previous": null,
+      "frame_id": "069b395e-220b-4ab0-9aab-69613091127b",
+      "frame_signature": "",
+      "video_id": "79c2fd7d-dd71-476a-913c-2776e6300568",
+      "video_signature": "",
+      "included": true
+    },
+    {
+      "id": 2,
+      "title": "镜头2",
+      "description": "暖色灯光下的木桌特写，一只成年人的手将未拆开的信缓缓推到桌面中央。",
+      "camera": "缓推",
+      "role_ids": [],
+      "previous": null,
+      "frame_id": "f4888c61-7efb-4aa1-8415-5a28c194136c",
+      "frame_signature": "",
+      "video_id": "b8a1b875-85f6-4aa9-8daa-d5eb08e5f368",
+      "video_signature": "",
+      "included": true
+    },
+    {
+      "id": 3,
+      "title": "镜头3",
+      "description": "车站大厅，一位成年人转身离开，另一位站在原地目送。",
+      "camera": "跟随",
+      "role_ids": [],
+      "previous": null,
+      "frame_id": "fd3fd94a-11d1-4f28-bae7-dd3e82d6ec4a",
+      "frame_signature": "",
+      "video_id": "53ebec49-d17f-4019-aad6-095ddfc2a214",
+      "video_signature": "",
+      "included": true
+    }
+  ],
+  "positions": {},
+  "merge_id": "b394bbca-0b60-474a-a86c-826ab4f7cc07"
+}

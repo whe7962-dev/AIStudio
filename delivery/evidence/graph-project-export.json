@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "project": "演示验收项目",
+  "exported_at": "2026-10-23T03:50:37.522Z",
+  "active_tab": "video",
+  "assets": [
+    {
+      "id": "keyframe:1",
+      "name": "镜头1 · 示例关键帧",
+      "kind": "keyframe"
+    },
+    {
+      "id": "keyframe:2",
+      "name": "镜头2 · 示例关键帧",
+      "kind": "keyframe"
+    },
+    {
+      "id": "keyframe:3",
+      "name": "镜头3 · 示例关键帧",
+      "kind": "keyframe"
+    },
+    {
+      "id": "wan-frame:653bce74-d5b0-45db-b79e-14d2a5f19137",
+      "name": "镜头3 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "wan-frame:2fc790c4-4acd-4ddc-bd2d-6281e407d0eb",
+      "name": "镜头2 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "wan-frame:fbcc9877-7158-472d-9b56-17880eb5cab7",
+      "name": "镜头1 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "wan-frame:c65e2706-4394-4d2e-8a59-d2bc5f26c5d6",
+      "name": "镜头2 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "wan-frame:e73f479a-f76a-4e74-896f-7a5758744fd6",
+      "name": "镜头1 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "wan-frame:fd3fd94a-11d1-4f28-bae7-dd3e82d6ec4a",
+      "name": "镜头3 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "wan-frame:069b395e-220b-4ab0-9aab-69613091127b",
+      "name": "镜头1 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "wan-frame:f4888c61-7efb-4aa1-8415-5a28c194136c",
+      "name": "镜头2 · 关键帧",
+      "kind": "real-keyframe"
+    },
+    {
+      "id": "image:4ce563bdd9:img_0",
+      "name": "VERIFY-BAG-1023_studio_1_1024x1024.jpg",
+      "kind": "image"
+    }
+  ],
+  "queue": [
+    {
+      "id": "video:prototype",
+      "type": "video",
+      "name": "示例视频（模拟）",
+      "status": "prototype",
+      "progress": 100
+    },
+    {
+      "id": "wan:730bb0fe-1210-4f43-89cc-1d8623e70581",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头3",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "wan:ffad317d-e648-40a1-a7a3-898d555b67c7",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头2",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "wan:e498dbc5-cd85-4441-bc18-260a023a2df1",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头1",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "wan:d92d025e-a252-4b1c-89f3-69c66afd58d7",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头1",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "wan:9fbacd42-39db-43fc-856a-2d535db9a0b7",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头1",
+      "status": "失败",
+      "progress": null
+    },
+    {
+      "id": "wan:b8a1b875-85f6-4aa9-8daa-d5eb08e5f368",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头2",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "wan:79c2fd7d-dd71-476a-913c-2776e6300568",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头1",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "wan:53ebec49-d17f-4019-aad6-095ddfc2a214",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头3",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "wan:2f83c0af-1a14-459f-8bba-ba9f718070e7",
+      "type": "video",
+      "real": true,
+      "name": "视频 · 镜头2",
+      "status": "已完成",
+      "progress": 100
+    },
+    {
+      "id": "image:4ce563bdd9",
+      "type": "image",
+      "name": "VERIFY-BAG-1023",
+      "status": "success",
+      "progress": 100,
+      "job_id": "4ce563bdd9"
+    },
+    {
+      "id": "wan-merge:c80c2503-ebb7-4a94-b4ce-77f5ef6f7002",
+      "type": "video",
+      "real": true,
+      "name": "合并成片",
+      "status": "已完成",
+      "progress": 100
+    }
+  ],
+  "video_prototype": {
+    "shots": [
+      {
+        "id": 1,
+        "description": "车站窗边，两位旧友重逢。演示修改保留。",
+        "camera": "固定"
+      },
+      {
+        "id": 2,
+        "description": "一封信被轻轻推到桌面，交代故事转折。",
+        "camera": "缓推"
+      },
+      {
+        "id": 3,
+        "description": "一人转身离开，另一人停在原地。",
+        "camera": "跟随"
+      }
+    ],
+    "selected": [
+      1,
+      2
+    ],
+    "frames": true,
+    "ready": true,
+    "reference": "",
+    "status": "prototype",
+    "stage": "video",
+    "progress": 100
+  },
+  "video_real": {
+    "shots": [
+      {
+        "id": 1,
+        "description": "车站窗边，两位成年旧友重逢，欲言又止。",
+        "camera": "固定"
+      },
+      {
+        "id": 2,
+        "description": "暖色灯光下的木桌特写，一只成年人的手将未拆开的信缓缓推到桌面中央。",
+        "camera": "缓推"
+      },
+      {
+        "id": 3,
+        "description": "车站大厅，一位成年人转身离开，另一位站在原地目送。",
+        "camera": "跟随"
+      }
+    ],
+    "frames": {
+      "2": {
+        "id": "f4888c61-7efb-4aa1-8415-5a28c194136c",
+        "url": "/api/demo/wan/keyframes/f4888c61-7efb-4aa1-8415-5a28c194136c/image"
+      }
+    },
+    "jobs": [
+      {
+        "id": "2f83c0af-1a14-459f-8bba-ba9f718070e7",
+        "project": "演示验收项目",
+        "shot": 2,
+        "prompt": "暖色灯光下的木桌特写，一只成年人的手将未拆开的信缓缓推到桌面中央。。运镜：缓推。保持首帧人物和场景一致，动作自然，无字幕。",
+        "model": "wan3.0-video-prime",
+        "status": "success",
+        "generated_by_model": true,
+        "created_at": 1792701069.270249,
+        "duration": 5,
+        "resolution": "480P",
+        "has_keyframe": true,
+        "request_id": "d1bde7a4-fac9-99d2-9b3f-57dc9cc52ad1",
+        "task_id": "61f509cc-bc60-40cf-8cbc-4142f496e3f1",
+        "provider_status": "SUCCEEDED",
+        "updated_at": 1792701115.0617769,
+        "error": null,
+        "usage": {
+          "video_count": 1,
+          "duration": 5,
+          "SR": 480,
+          "output_video_duration": 5,
+          "input_video_duration": 0,
+          "fps": 30,
+          "ratio": "16:9"
+        },
+        "completed_at": 1792701115.702687
+      }
+    ],
+    "activeJob": "2f83c0af-1a14-459f-8bba-ba9f718070e7",
+    "shot": 2,
+    "frameTask": null,
+    "videoMode": "real"
+  },
+  "video_workflow": {
+    "revision": 38,
+    "story": "同一场车站告别。一对多年未见的成年旧友：黑色短发、深灰外套的男子在站台，黑色中长发、浅灰大衣与黑围巾的女子在打开的列车车窗内。全片阴天冷灰自然光，写实电影风格。沿用同一对人物、服装、车窗和站台。背景只约束人物与环境，各镜头仅演指定动作。",
+    "roles": [
+      {
+        "id": "7b577f6b-5f68-4047-ba88-8c5379454890",
+        "name": "车站旧友（双人参考）",
+        "description": "沿用参考图中的同一对人物：黑色短发男性，深灰外套；黑色中长发女性，浅灰大衣、黑围巾。保持两人的脸型、发型和服装不变。",
+        "asset_id": "f121481b-7f18-4f62-b7fa-d19b8a17cfe6"
+      }
+    ],
+    "shots": [
+      {
+        "id": 1,
+        "title": "重逢",
+        "description": "中近景，参考图中同一对旧友隔着列车车窗相望。男子深灰外套，女子浅灰大衣与黑围巾，欲言又止，轻微自然呼吸与眼神变化。",
+        "camera": "固定",
+        "role_ids": [
+          "7b577f6b-5f68-4047-ba88-8c5379454890"
+        ],
+        "previous": null,
+        "frame_id": "fbcc9877-7158-472d-9b56-17880eb5cab7",
+        "frame_signature": "80e3542f",
+        "video_id": "e498dbc5-cd85-4441-bc18-260a023a2df1",
+        "video_signature": "7b5a1562",
+        "included": true,
+        "video_mode": "first_frame"
+      },
+      {
+        "id": 2,
+        "title": "递信",
+        "description": "衔接前一镜头。在同一列车车窗旁，深灰外套的男子将一封素色未拆开的信缓缓递到女子手中。镜头稍微拉近，保留两人的上半身与脸部，保持相同服装和冷灰自然光。",
+        "camera": "缓推",
+        "role_ids": [
+          "7b577f6b-5f68-4047-ba88-8c5379454890"
+        ],
+        "previous": 1,
+        "frame_id": "2fc790c4-4acd-4ddc-bd2d-6281e407d0eb",
+        "frame_signature": "74ab4cff",
+        "video_id": "ffad317d-e648-40a1-a7a3-898d555b67c7",
+        "video_signature": "997cc4b7",
+        "included": true,
+        "video_mode": "first_frame"
+      },
+      {
+        "id": 3,
+        "title": "告别",
+        "description": "衔接前一镜头，女子拿着收到的信停在同一车窗内。男子在站台缓缓转身离开，女子目送。保留同一对人物的脸型、发型和衣着，冷灰自然光，中景。",
+        "camera": "跟随",
+        "role_ids": [
+          "7b577f6b-5f68-4047-ba88-8c5379454890"
+        ],
+        "previous": 2,
+        "frame_id": "653bce74-d5b0-45db-b79e-14d2a5f19137",
+        "frame_signature": "1b888a9d",
+        "video_id": "730bb0fe-1210-4f43-89cc-1d8623e70581",
+        "video_signature": "9d349892",
+        "included": true,
+        "video_mode": "first_frame"
+      }
+    ],
+    "positions": {
+      "story": [
+        56.9672131147541,
+        49.18032786885246
+      ]
+    },
+    "merge_id": "c80c2503-ebb7-4a94-b4ce-77f5ef6f7002"
+  },
+  "note": "项目记录不包含图片二进制；图片与视频文件请用对应导出按钮下载。"
+}

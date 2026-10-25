@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AIStudio · 双线演示版</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --accent:#2563eb; --danger:#dc2626; --warn:#d97706; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; background:var(--bg); color:#1f2937; }
+  .wrap { max-width:1160px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:#6b7280; font-size:13px; margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns: 400px 1fr; gap:20px; }
+  @media (max-width:860px){ .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card h2 { font-size:14px; margin:0 0 12px; }
+  .card h3 { font-size:13px; margin:16px 0 8px; color:#374151; }
+  label { display:block; font-size:13px; color:#374151; margin:10px 0 5px; }
+  input[type=file], select, input[type=text], input[type=number], textarea { width:100%; font-size:14px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); }
+  textarea { resize:vertical; min-height:52px; }
+  .row { display:flex; align-items:center; gap:8px; }
+  button { cursor:pointer; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:13px; padding:8px 12px; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button.mini { font-size:12px; padding:4px 8px; background:#f3f4f6; color:#374151; }
+  #cancelBtn { background:#e5e7eb; color:#374151; }
+  #preview { margin-top:12px; width:100%; aspect-ratio:1/1; object-fit:cover; border:1px dashed var(--line); border-radius:10px; background:#fafafa; }
+  .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .th { position:relative; width:72px; border:2px solid var(--line); border-radius:8px; overflow:hidden; cursor:pointer; }
+  .th img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+  .th.primary { border-color:var(--accent); }
+  .th .badge2 { position:absolute; left:0; top:0; font-size:10px; background:var(--accent); color:#fff; padding:1px 5px; }
+  .th .warn { position:absolute; right:0; bottom:0; width:10px; height:10px; border-radius:50%; background:var(--warn); }
+  .th .del { position:absolute; right:0; top:0; font-size:12px; background:rgba(0,0,0,.5); color:#fff; padding:1px 5px; border-radius:0 0 0 6px; }
+  .warnline { color:var(--warn); font-size:12px; margin-top:4px; }
+  #status { margin-top:12px; font-size:13px; min-height:18px; }
+  #status.err { color:var(--danger); }
+  .hint { font-size:12px; color:#6b7280; margin-top:4px; }
+  .badge { display:inline-block; font-size:12px; color:#fff; background:var(--accent); border-radius:999px; padding:2px 10px; margin-left:8px; }
+  .refbox { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding:8px 10px; background:#fafafa; border:1px dashed var(--line); border-radius:8px; }
+  .refbox img { width:64px; height:64px; object-fit:cover; border-radius:6px; }
+  .ref-label { font-size:12px; color:#6b7280; }
+  .presets { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .p { border:2px solid var(--line); border-radius:10px; overflow:hidden; cursor:pointer; background:#fff; text-align:center; }
+  .p img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+  .p .nm { font-size:12px; padding:4px 0; color:#374151; }
+  .p.sel { border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+  .prompt-preview { margin-top:10px; padding:8px 10px; background:#f6f8fb; border:1px dashed var(--line); border-radius:8px; font-size:12px; color:#4b5563; line-height:1.5; }
+  details { margin-top:12px; }
+  details summary { cursor:pointer; font-size:13px; color:var(--accent); }
+  .progress { height:8px; background:#e5e7eb; border-radius:999px; margin-top:12px; overflow:hidden; }
+  .progress-fill { height:100%; width:0; background:var(--accent); transition:width .3s; }
+  #results { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
+  .r { border:2px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; }
+  .r img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; cursor:zoom-in; }
+  .r.sel { border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+  .r .tag { font-size:12px; padding:4px 8px; color:#6b7280; }
+  .r .meta { font-size:11px; padding:0 8px 6px; color:#9ca3af; }
+  .r .ops { display:flex; gap:4px; padding:0 8px 8px; }
+  .r .fail { padding:16px 8px 4px; text-align:center; color:var(--danger); font-size:13px; }
+  .r .pend { padding:60px 8px; text-align:center; color:#9ca3af; font-size:13px; }
+  .r button { flex:1; }
+  .actions { margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; }
+  .lightbox { position:fixed; inset:0; background:rgba(15,17,21,.92); display:flex; flex-direction:column; z-index:60; }
+  .lb-top { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; color:#fff; }
+  .lb-top button { background:rgba(255,255,255,.15); }
+  .lb-stage { flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; }
+  .lb-stage img { max-width:90%; max-height:88vh; object-fit:contain; }
+  .lb-stage img.zoom100 { max-width:none; max-height:none; }
+  .lb-stage.comparing img { max-width:48%; }
+  .lb-stage.comparing img.zoom100 { max-width:none; }
+  .lb-stage img.orig { opacity:.95; border:1px solid rgba(255,255,255,.25); }
+  .lb-nav { position:absolute; top:50%; transform:translateY(-50%); font-size:34px; background:rgba(255,255,255,.12); border:none; color:#fff; padding:6px 14px; border-radius:10px; }
+  #lbPrev { left:10px; } #lbNext { right:10px; }
+</style>
+<link rel="stylesheet" href="/studio.css" />
+<link rel="stylesheet" href="/video-graph.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="studio-header">
+    <div><h1>AIStudio <span class="version">演示版</span></h1><p class="sub">一个项目，两条创作线 · 图片实接 / 视频真实验证</p></div>
+    <div class="project-field"><label for="projectName">当前项目</label><input id="projectName" maxlength="60" value="我的创作项目" /></div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="创作类型">
+    <button id="imageTab" role="tab" aria-selected="true" aria-controls="imagePanel">电商图片</button>
+    <button id="videoTab" role="tab" aria-selected="false" aria-controls="videoPanel" tabindex="-1">商品广告视频 <span class="prototype-label">开发中</span></button>
+  </nav>
+  <details class="card shared-assets" id="sharedAssets">
+    <summary>项目素材 <span id="assetCount">0</span><span class="hint"> · 两条创作线共用</span></summary>
+    <p class="hint">上传的图片、生成结果和示例关键帧集中在这里。切换标签不会清空素材。</p>
+    <div id="assetLibrary" class="asset-library"><p class="empty">暂无素材。先在图片页上传商品图，或在视频页生成示例关键帧。</p></div>
+  </details>
+  <div id="shellNotice" role="status" aria-live="polite"></div>
+  <section id="imagePanel" role="tabpanel" aria-labelledby="imageTab">
+  <div class="grid">
+    <div class="card">
+      <h2>① 上传商品图（参考图，1–5 张）</h2>
+      <input type="file" id="file" accept="image/jpeg,image/png,image/webp" multiple />
+      <img id="preview" alt="主参考图预览" /><div id="previewEmpty" class="empty">上传 JPG、PNG 或 WebP 商品图<br>在这里预览主参考</div>
+      <div class="thumbs" id="thumbs"></div>
+      <div id="qaWarn"></div>
+      <div class="hint">可上传 1–5 张候选图；本次只使用标记为「主」的图片生成。每张不超过 10MB。</div>
+
+      <h3>② 场景预设</h3>
+      <div class="presets" id="presets"></div>
+
+      <h3>③ 创作意图</h3>
+      <label for="sku">SKU / 商品编号</label>
+      <input type="text" id="sku" placeholder="例：CUP-001" />
+      <label for="sellingPoints">商品卖点（≤200 字）</label>
+      <input type="text" id="sellingPoints" maxlength="200" placeholder="例：轻量通勤、防泼水" />
+      <label for="sceneText">场景描述</label>
+      <input type="text" id="sceneText" placeholder="例：清晨木质书桌" />
+      <label for="light">光线</label>
+      <select id="light"><option>自然光</option><option>柔光</option><option>暖光</option><option>逆光</option><option>棚拍</option></select>
+      <label for="style">风格</label>
+      <select id="style"><option>写实</option><option>极简</option><option>日系</option><option>复古</option><option>高级感</option></select>
+
+      <label class="row"><input type="checkbox" id="lockProduct" checked /> 尽量保持商品外观</label>
+
+      <div class="hint">通过提示词保持主体，生成后仍需对比检查商品细节。</div>
+      <h3>④ 尺寸 / 比例</h3>
+      <label for="ratio">比例</label>
+      <select id="ratio">
+        <option value="1:1">1:1（方图）</option>
+        <option value="3:4" disabled>3:4（当前模型不支持）</option>
+        <option value="9:16" disabled>9:16（当前模型不支持）</option>
+        <option value="16:9" disabled>16:9（当前模型不支持）</option>
+      </select>
+      <label for="resolution">分辨率（长边）</label>
+      <select id="resolution"><option>1024</option><option>1536</option><option>2048</option></select>
+      <div class="hint" id="sizeHint">实际输出：1024×1024</div>
+
+      <h3>⑤ 生成数量 / 种子</h3>
+      <div class="seg" id="countSeg">
+        <button data-n="1">1</button><button data-n="2">2</button>
+        <button data-n="4" class="on">4</button><button data-n="8">8</button>
+      </div>
+      <div class="hint" id="etaHint">预计约 20 秒</div>
+      <label for="seed">种子（可选，留空随机）</label>
+      <input type="number" min="0" max="2147483639" step="1" id="seed" placeholder="例：12345" />
+
+      <details>
+        <summary>高级设置（负面词 / 高级 prompt）</summary>
+        <label for="negative">负面词</label>
+        <textarea id="negative">额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝</textarea>
+        <label for="advancedPrompt">最终 prompt（可编辑）</label>
+        <textarea id="advancedPrompt" rows="4"></textarea>
+        <button type="button" id="resetPrompt" style="margin-top:8px;">恢复默认 prompt</button>
+      </details>
+
+      <div class="prompt-preview" id="promptPreview"></div>
+
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button id="generateBtn" style="flex:1;">⑥ 生成</button>
+        <button id="cancelBtn" hidden>取消</button>
+      </div>
+      <div class="progress" id="progressWrap" hidden><div class="progress-fill" id="progressFill"></div></div>
+      <div id="status" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="card">
+      <label for="history">历史任务（最近 100 次）</label>
+      <select id="history"><option value="">选择历史任务</option></select>
+      <div class="hint" style="margin-bottom:14px">已生成图片保存在本机，刷新或重启后可继续查看、重试和下载。</div>
+      <button id="resumePoll" hidden>重新查询任务</button>
+      <h2>⑦ 结果（点击放大）<span class="badge" id="refBadge" hidden>参考图已参与生成</span></h2>
+      <div class="refbox" id="refBox" hidden>
+        <span class="ref-label">主参考图</span>
+        <img id="refImg" alt="参考图" />
+      </div>
+      <div id="results"></div>
+
+    </div>
+  </div>
+  </section>
+  <section id="videoPanel" role="tabpanel" aria-labelledby="videoTab" hidden>
+    <div class="actions" style="margin:0 0 12px"><button id="realMode">真实模型验证</button><button id="prototypeMode" class="secondary">本地原型演示</button></div>
+    <div id="realVideoPanel">
+      <details class="card ad-brief" id="adBriefPanel">
+        <summary>商品广告 · 需求与提示词</summary>
+        <p class="hint">先明确商品与卖点，再整理广告方案。只预览和保存，不会自动生成。</p>
+        <form id="adForm">
+          <div class="ad-fields">
+            <label>商品名称<input id="adProduct" required maxlength="120" placeholder="例如：帆布双肩包"></label>
+            <label>广告结构<select id="adTemplate"></select></label>
+          </div>
+          <label>你想要什么广告<textarea id="adRequirement" required maxlength="1800" placeholder="例如：给通勤人群看的背包广告，简洁自然，突出我提供的卖点。"></textarea></label>
+          <details><summary>补充商品事实、人群与风格（可选）</summary>
+            <label>可使用的真实卖点<textarea id="adFacts" maxlength="1800" placeholder="只填写你确认的材质、规格、功能等；没有依据的功效和数据不要填写。"></textarea></label>
+            <label>目标人群<input id="adAudience" maxlength="200"></label>
+            <label>视觉风格<input id="adStyle" maxlength="300"></label>
+          </details>
+          <button id="adPrepare" type="submit" disabled>整理为广告方案</button>
+        </form>
+        <section id="adPreviewSection" hidden>
+          <label>方案预览（可编辑）<textarea id="adPreview" maxlength="12000"></textarea></label>
+          <ul id="adPending"></ul><button id="adConfirm" type="button" disabled>确认并保存方案</button>
+        </section>
+        <p id="adStatus" class="hint" role="status">正在加载广告模板…</p>
+        <details><summary>查看全片基本规则</summary><ol id="adRules"></ol></details>
+      </details>
+      <div class="workflow-heading"><div><h2>商品广告画布 <span class="prototype-label">新版流程开发中</span></h2><p class="hint">只保留三个核心步骤，确认上一步，再展开下一步。</p></div><button id="graphMerge">合并成片</button></div>
+      <div id="graphServiceNotice" class="prototype-banner" hidden></div>
+      <div class="graph-toolbar"><div class="actions"><button id="graphAddShot" hidden>＋ 续一段</button><button id="graphAddRole" class="secondary" hidden>＋ 参考素材</button><button id="graphArrange" class="secondary" hidden>自动排列</button></div><div class="actions"><button id="graphZoomOut" class="secondary" aria-label="缩小画布">−</button><span id="graphZoomLabel">100%</span><button id="graphZoomIn" class="secondary" aria-label="放大画布">＋</button><button id="graphFit" class="secondary">适应画布</button></div></div>
+      <div class="graph-workspace">
+        <div id="graphViewport" tabindex="0" aria-label="视频画布，可拖动空白区域平移"><div id="graphSurface"><svg id="graphEdges" aria-label="角色参考与镜头衔接连线"></svg><div id="graphNodes"></div></div><div class="graph-help">点击圆形节点操作 · 拖动空白平移 · 确认后展开下一步</div></div>
+        <aside id="graphInspector" class="card" aria-label="节点设置"></aside>
+      </div>
+      <div id="graphStatus" role="status" aria-live="polite" class="hint">正在恢复创作画布…</div>
+      <div class="card graph-timeline"><div class="queue-heading"><h2>成片顺序</h2><span id="graphTimelineHint" class="hint"></span></div><div id="graphTimeline"></div><div class="hint">仅合并勾选的镜头，顺序与分镜排列一致。当前合并为无声直切；不会自动修复已有的人物差异。</div></div>
+    </div>
+    <div id="prototypeVideoPanel" hidden>
+    <div class="prototype-banner"><strong>历史短剧原型 · 非广告样本</strong><span>仅演示工作流。关键帧与 MP4 均为本地预置示例，不调用模型，不随输入内容生成。</span></div>
+    <div class="video-grid">
+      <div class="card video-editor">
+        <h2>① 分镜表</h2>
+        <p class="hint">示例短剧：一封未寄出的信 · 三个镜头。可编辑描述与运镜，保存为演示记录。</p>
+        <label for="videoReference">参考素材（与图片页共用）</label>
+        <select id="videoReference"><option value="">不选参考，使用本地示例</option></select>
+        <div class="video-reference" id="videoRefBox" hidden><img id="videoRefPreview" alt="所选共用参考素材" /><span class="hint">已选素材仅作为流程参考，不会改变预置示例视频。</span></div>
+        <div class="table-wrap"><table class="storyboard"><thead><tr><th>镜头</th><th>画面 / 动作</th><th>运镜</th><th>时长</th></tr></thead><tbody id="storyRows"></tbody></table></div>
+        <div class="actions"><button id="keyframeGenerate">② 生成示例关键帧（模拟）</button><button id="videoReset" class="secondary">恢复示例分镜</button></div>
+        <details class="demo-check"><summary>演示故障恢复</summary><label class="row"><input id="simulateVideoFailure" type="checkbox" /> 下一次模拟失败（用于验证提示和重试）</label></details>
+        <div id="videoStatus" role="status" aria-live="polite" class="hint">等待生成示例关键帧。</div>
+        <progress id="videoProgress" max="100" value="0" hidden aria-label="视频原型模拟进度"></progress>
+      </div>
+      <div class="card video-preview">
+        <h2>③ 关键帧与镜头选择 <span class="prototype-label">示例素材</span></h2>
+        <div id="keyframes"><p class="empty">先在左侧检查分镜，点击「生成示例关键帧」。随后选择要演示的镜头。</p></div>
+        <div class="actions"><button id="videoGenerate" disabled>④ 生成示例视频（模拟）</button><button id="videoRetry" class="secondary" hidden>重试模拟任务</button></div>
+        <div id="clipControls" hidden><label for="clipSelect">播放镜头</label><select id="clipSelect"></select></div>
+        <div id="videoEmpty" class="empty">示例视频将在模拟任务结束后就绪。</div>
+        <video id="samplePlayer" controls playsinline preload="metadata" hidden aria-label="本地示例视频播放器"></video>
+        <p class="hint">导出在下方共用区域。单镜头 MP4 / 原型演示包均保留原型说明。</p>
+      </div>
+    </div>
+    </div>
+  </section>
+  <footer class="card workspace-footer">
+    <div class="queue-heading"><h2>任务队列 <span id="queueCount">0</span></h2><span class="hint">两条线共用 · 显示进度与结果</span></div>
+    <div id="taskQueue"><p class="empty">暂无任务，开始一次创作后在这里查看进度。</p></div>
+    <div class="export-bar"><div><strong id="exportTitle">图片导出</strong><div class="hint" id="exportHint">选择成功图片后下载，全部导出附带生成记录。</div></div>
+      <div class="actions" id="imageExports"><button id="exportBtn" disabled>导出选中图</button><button id="zipBtn" disabled>全部图片 ZIP</button></div>
+      <div class="actions" id="videoExports" hidden><div id="realExports" class="actions"><button id="graphFilmExport" disabled>导出成片 MP4</button><button id="realSingleExport" disabled>导出选中镜头</button><button id="realAllExport" disabled>全部真实视频 ZIP</button></div><div id="prototypeExports" class="actions" hidden><button id="videoSingleExport" disabled>导出选中示例 MP4</button><button id="videoAllExport" disabled>导出原型演示包</button></div></div>
+      <button id="projectExport" class="secondary">导出项目记录</button>
+    </div>
+  </footer>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lb-top">
+    <span id="lbInfo"></span>
+    <div style="display:flex; gap:8px;">
+      <button id="lbCompare">对比原图</button>
+      <button id="lbZoom">100%</button>
+      <button id="lbDownload">下载</button>
+      <button id="lbClose">×</button>
+    </div>
+  </div>
+  <div class="lb-stage" id="lbStage">
+    <img id="lbImg" alt="生成图" />
+    <img id="lbOrig" class="orig" alt="参考图" hidden />
+  </div>
+  <button class="lb-nav" id="lbPrev">‹</button>
+  <button class="lb-nav" id="lbNext">›</button>
+</div>
+
+<script src="/studio.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const results = [];
+  const selFiles = [];   // {file, dataUrl}
+  let primaryIndex = 0;
+  let selectedId = null;
+  let jobId = null;
+  let presets = [];
+  let selectedPresetId = null;
+  let promptEdited = false;
+  let count = 4;
+  let generating = false;
+  let pollTimer = null;
+  let lbIndex = -1;
+  let jobCanRetry = true;
+  let pendingUploads = 0;
+
+  async function loadPresets() {
+    try {
+      const r = await fetch('/api/demo/presets');
+      const d = await r.json();
+      presets = d.presets || [];
+      const box = $('presets');
+      box.innerHTML = '';
+      presets.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'p'; div.dataset.id = p.id;
+        const im = document.createElement('img'); im.src = p.thumb; im.alt = p.name;
+        const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = p.name;
+        div.appendChild(im); div.appendChild(nm);
+        div.onclick = () => selectPreset(p.id, div);
+        box.appendChild(div);
+        if (i === 0) selectPreset(p.id, div);
+      });
+      refreshPrompt();
+    } catch (e) { setStatus('加载预设失败：' + e.message, true); }
+  }
+
+  function selectPreset(id, el) {
+    if (generating) return;
+    selectedPresetId = id;
+    document.querySelectorAll('.p').forEach(n => n.classList.remove('sel'));
+    if (el) el.classList.add('sel');
+    refreshPrompt();
+  }
+
+  function setStatus(msg, isErr) {
+    $('status').textContent = msg || '';
+    $('status').className = isErr ? 'err' : '';
+  }
+
+  function currentSize() {
+    return parseInt($('resolution').value, 10) + 'x' + parseInt($('resolution').value, 10);
+  }
+  function refreshSizeHint() { $('sizeHint').textContent = '实际输出：' + currentSize().replace('x', '×'); }
+  $('resolution').addEventListener('change', refreshSizeHint);
+  $('ratio').addEventListener('change', refreshSizeHint);
+
+  document.querySelectorAll('#countSeg button').forEach(b => {
+    b.addEventListener('click', () => {
+      if (generating) return;
+      count = parseInt(b.dataset.n, 10);
+      document.querySelectorAll('#countSeg button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      $('etaHint').textContent = '预计 ' + (count <= 2 ? '约 15 秒' : count <= 4 ? '约 20 秒' : '约 40 秒');
+    });
+  });
+
+  function defaultPrompt() {
+    const parts = [];
+    const sp = $('sellingPoints').value.trim();
+    if (sp) parts.push('商品卖点：' + sp);
+    const preset = presets.find(p => p.id === selectedPresetId) || presets[0] || {fragment: ''};
+    if (preset.fragment) parts.push(preset.fragment);
+    const scene = $('sceneText').value.trim();
+    if (scene) parts.push('场景：' + scene);
+    parts.push('光线：' + $('light').value);
+    parts.push('风格：' + $('style').value);
+    parts.push($('lockProduct').checked ? '严格保持商品形状、颜色、logo、材质不变' : '允许背景和风格变化，但保持商品主体可辨认');
+    parts.push('避免：' + ($('negative').value.trim() || '文字、水印、logo、杂物'));
+    return parts.join('，');
+  }
+  function refreshPrompt() {
+    if (!promptEdited) $('advancedPrompt').value = defaultPrompt();
+    $('promptPreview').textContent = 'prompt 预览：' + $('advancedPrompt').value;
+  }
+  ['sku','sellingPoints','sceneText','light','style','negative'].forEach(id => $(id).addEventListener('input', refreshPrompt));
+  $('lockProduct').addEventListener('change', refreshPrompt);
+  $('advancedPrompt').addEventListener('input', () => { promptEdited = true; refreshPrompt(); });
+  $('resetPrompt').addEventListener('click', () => { promptEdited = false; refreshPrompt(); });
+
+  function renderThumbs() {
+    Studio.syncUploads(selFiles);
+    $('previewEmpty').hidden=selFiles.length>0;
+    const box = $('thumbs');
+    box.innerHTML = '';
+    selFiles.forEach((f, i) => {
+      const div = document.createElement('div');
+      div.className = 'th' + (i === primaryIndex ? ' primary' : '');
+      const im = document.createElement('img'); im.src = f.dataUrl;
+      const del = document.createElement('span'); del.className = 'del'; del.textContent = '×';
+      del.onclick = (e) => {
+        e.stopPropagation();
+        if (generating) return;
+        selFiles.splice(i, 1);
+        if (primaryIndex === i) primaryIndex = Math.min(i, selFiles.length - 1);
+        else if (primaryIndex > i) primaryIndex -= 1;
+        renderThumbs();
+      };
+      div.appendChild(im); div.appendChild(del);
+      if (i === primaryIndex) { const b = document.createElement('span'); b.className = 'badge2'; b.textContent = '主'; div.appendChild(b); }
+      div.onclick = () => { if (generating) return; primaryIndex = i; renderThumbs(); };
+      box.appendChild(div);
+    });
+    if (selFiles.length) {
+      const p = Math.min(primaryIndex, selFiles.length - 1);
+      $('preview').src = selFiles[p].dataUrl;
+
+    } else {
+      $('preview').removeAttribute('src');
+
+    }
+  }
+
+  $('file').addEventListener('change', async () => {
+    const files = [...$('file').files];
+    const room = Math.max(0, 5 - selFiles.length);
+    const toAdd = files.slice(0, room);
+    if (files.length > toAdd.length) setStatus('最多上传 5 张，已忽略超出部分', false);
+    pendingUploads++;
+    $('generateBtn').disabled = true;
+    $('file').disabled = true;
+    try {
+      for (const f of toAdd) {
+        if (!['image/jpeg','image/png','image/webp'].includes(f.type) || f.size > 10 * 1024 * 1024) {
+          setStatus('请使用不超过 10MB 的 JPG、PNG 或 WebP 图片', true);
+          continue;
+        }
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader(); reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('图片读取失败')); reader.readAsDataURL(f);
+        });
+        selFiles.push({ file: f, dataUrl });
+      }
+      primaryIndex = Math.max(0, Math.min(primaryIndex, selFiles.length - 1));
+      renderThumbs();
+    } catch (e) { setStatus(e.message, true); }
+    finally {
+      pendingUploads--; $('file').value = ''; $('file').disabled = generating;
+      $('generateBtn').disabled = generating || pendingUploads > 0;
+    }
+  });
+
+  function buildForm(n) {
+    const fd = new FormData();
+    selFiles.forEach(f => fd.append('images', f.file));
+    fd.append('primary_index', primaryIndex);
+    fd.append('prompt', $('advancedPrompt').value);
+    fd.append('negative_prompt', $('negative').value);
+    fd.append('scene', selectedPresetId);
+    fd.append('count', n);
+    fd.append('lock_product', $('lockProduct').checked ? 'true' : 'false');
+    fd.append('size', currentSize());
+    fd.append('sku', $('sku').value.trim() || 'sku');
+    fd.append('seed_base', $('seed').value.trim() || String(crypto.getRandomValues(new Uint32Array(1))[0] % 2147483639));
+    return fd;
+  }
+
+  function renderResults(images) {
+    Studio.addAssets(images.filter(img=>img && img.status==='success').map(img=>({id:'image:'+jobId+':'+img.id,name:img.filename||img.id,url:img.data_url,kind:'image'})));
+    const box = $('results');
+    box.innerHTML = '';
+    results.length = 0;
+    const previousSelection = selectedId;
+    selectedId = null;
+    if (!images.length) { const empty=document.createElement('p'); empty.className='empty'; empty.textContent='上传商品图并选择创作意图，生成结果会出现在这里。'; box.append(empty); }
+    images.forEach((img) => {
+      results.push(img || null);
+      const div = document.createElement('div');
+      div.className = 'r';
+      if (!img) {
+        const pend = document.createElement('div'); pend.className = 'pend'; pend.textContent = '生成中…';
+        div.appendChild(pend);
+      } else {
+        div.dataset.id = img.id;
+        if (img.status === 'success') {
+          const im = document.createElement('img'); im.src = img.data_url; im.alt = img.id;
+          im.onclick = () => { select(img.id, div); openLightbox(results.findIndex(r => r && r.id === img.id)); };
+          div.appendChild(im);
+          const tag = document.createElement('div'); tag.className = 'tag';
+          tag.textContent = (img.source === 'local' ? '本地合成' : '场景图');
+          div.appendChild(tag);
+          const meta = document.createElement('div'); meta.className = 'meta';
+          meta.textContent = 'seed ' + (img.seed ?? '-');
+          div.appendChild(meta);
+          const ops = document.createElement('div'); ops.className = 'ops';
+          const bSame = document.createElement('button'); bSame.className = 'mini'; bSame.textContent = '同seed重绘'; bSame.title = '相同种子重新生成，不保证像素完全一致';
+          bSame.onclick = (e) => { e.stopPropagation(); retryImage(img.id, 'same'); };
+          const bNew = document.createElement('button'); bNew.className = 'mini'; bNew.textContent = '新seed变化';
+          bNew.onclick = (e) => { e.stopPropagation(); retryImage(img.id, 'new'); };
+          const bCopy = document.createElement('button'); bCopy.className = 'mini'; bCopy.textContent = '复制seed';
+          bCopy.onclick = (e) => { e.stopPropagation(); navigator.clipboard && navigator.clipboard.writeText(String(img.seed ?? '')); };
+          ops.appendChild(bSame); ops.appendChild(bNew); ops.appendChild(bCopy);
+          div.appendChild(ops);
+        } else {
+          const fail = document.createElement('div'); fail.className = 'fail'; fail.textContent = img.status === 'canceled' ? '已取消' : img.status === 'interrupted' ? '已中断' : '生成失败';
+          div.appendChild(fail);
+          const err = document.createElement('div'); err.className = 'tag'; err.textContent = (img.error || '').slice(0, 50);
+          div.appendChild(err);
+          const btn = document.createElement('button'); btn.textContent = '重试';
+          btn.onclick = (e) => { e.stopPropagation(); retryImage(img.id, 'new'); };
+          div.appendChild(btn);
+        }
+      }
+      box.appendChild(div);
+    });
+    $('exportBtn').disabled = true;
+    $('zipBtn').disabled = !images.some(img => img && img.status === 'success');
+    box.querySelectorAll('button').forEach(b => { if (b.textContent !== '复制seed') b.disabled = generating || !jobCanRetry; });
+    const selectedIndex = results.findIndex(r => r && r.id === previousSelection && r.status === 'success');
+    if (selectedIndex >= 0) selectByIndex(selectedIndex);
+  }
+
+  function select(id, el) {
+    selectedId = id;
+    document.querySelectorAll('.r').forEach(n => n.classList.remove('sel'));
+    el.classList.add('sel');
+    $('exportBtn').disabled = false;
+  }
+
+  function successIndices() { return results.map((r, i) => (r && r.status === 'success') ? i : -1).filter(i => i >= 0); }
+  function downloadName(img) { return img.filename || (img.id + '.jpg'); }
+  function openLightbox(index) { lbIndex = index; updateLightbox(); $('lightbox').hidden = false; }
+  function updateLightbox() {
+    const img = results[lbIndex];
+    if (!img || img.status !== 'success') return;
+    $('lbImg').src = img.data_url;
+    $('lbImg').classList.remove('zoom100');
+    $('lbZoom').textContent = '100%';
+    $('lbOrig').src = $('refImg').src;
+    $('lbOrig').hidden = true;
+    $('lbCompare').disabled = !$('refImg').hasAttribute('src');
+    $('lbStage').classList.remove('comparing');
+    const list = successIndices();
+    $('lbInfo').textContent = (list.indexOf(lbIndex) + 1) + ' / ' + list.length + ' · ' + downloadName(img);
+  }
+  function lbMove(delta) {
+    const list = successIndices();
+    if (!list.length) return;
+    const pos = list.indexOf(lbIndex);
+    lbIndex = list[(pos + delta + list.length) % list.length];
+    selectByIndex(lbIndex);
+    updateLightbox();
+  }
+  function selectByIndex(i) {
+    selectedId = results[i] ? results[i].id : null;
+    document.querySelectorAll('.r').forEach(n => n.classList.remove('sel'));
+    const el = document.querySelector('.r[data-id="' + (selectedId || '') + '"]');
+    if (el) el.classList.add('sel');
+    $('exportBtn').disabled = !selectedId;
+  }
+  function closeLightbox() { $('lightbox').hidden = true; }
+  $('lbPrev').addEventListener('click', () => lbMove(-1));
+  $('lbNext').addEventListener('click', () => lbMove(1));
+  $('lbClose').addEventListener('click', closeLightbox);
+  $('lightbox').addEventListener('click', (e) => { if (e.target === $('lightbox')) closeLightbox(); });
+  document.addEventListener('keydown', (e) => {
+    if ($('lightbox').hidden) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') lbMove(-1);
+    if (e.key === 'ArrowRight') lbMove(1);
+  });
+  $('lbZoom').addEventListener('click', () => {
+    const im = $('lbImg');
+    if (im.classList.contains('zoom100')) { im.classList.remove('zoom100'); $('lbZoom').textContent = '100%'; }
+    else { im.classList.add('zoom100'); $('lbZoom').textContent = '适应'; }
+  });
+  $('lbCompare').addEventListener('click', () => { $('lbOrig').hidden = !$('lbOrig').hidden; $('lbStage').classList.toggle('comparing', !$('lbOrig').hidden); });
+  $('lbDownload').addEventListener('click', () => {
+    const img = results[lbIndex];
+    if (!img || img.status !== 'success') return;
+    const a = document.createElement('a'); a.href = img.data_url; a.download = downloadName(img);
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  function statusText(d) {
+    if (d.status === 'success') return '已出 ' + d.succeeded + ' 张';
+    if (d.status === 'partial') return '成功 ' + d.succeeded + '/' + d.count + ' 张，失败 ' + d.failed + ' 张，可重试';
+    if (d.status === 'failed') return '全部失败，可重试';
+    if (d.status === 'canceled') return '已取消，保留 ' + d.succeeded + ' 张成功图片；未完成项可重试';
+    if (d.status === 'interrupted') return '任务已中断，已恢复 ' + d.succeeded + ' 张图片；未完成项可重试';
+    if (d.status === 'canceling') return '正在取消：停止后续图片，已发出的请求仍需等待返回；成功图片会保留';
+    return '生成中… 已完成 ' + d.completed + '/' + d.count;
+  }
+  function setBusy(busy) {
+    generating = busy;
+    document.querySelectorAll('#results .ops button, #results .r > button').forEach(button=>{ if (button.textContent!=='复制seed') button.disabled=busy || !jobCanRetry; });
+    document.querySelectorAll('#imagePanel .grid > .card:first-child input, #imagePanel .grid > .card:first-child select, #imagePanel .grid > .card:first-child textarea, #countSeg button, #resetPrompt').forEach(el => el.disabled = busy);
+    // Keep unsupported ratios disabled when unlocking the form.
+    $('generateBtn').disabled = busy || pendingUploads > 0;
+    $('history').disabled = busy;
+    $('cancelBtn').hidden = !busy;
+    $('progressWrap').hidden = !busy;
+  }
+  async function pollJob(id) {
+    if (id !== jobId) return;
+    try {
+      const r = await fetch('/api/demo/jobs/' + id);
+      const d = await r.json();
+      if (id !== jobId) return;
+      if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+      const busy = ['generating','canceling'].includes(d.status);
+      setBusy(busy);
+      Studio.updateJob({id:'image:'+d.job_id,type:'image',name:d.sku||'商品生图',status:d.status,progress:Math.round(d.completed/d.count*100),job_id:d.job_id});
+      jobCanRetry = d.can_retry;
+      $('cancelBtn').disabled = d.status === 'canceling';
+      $('refBadge').hidden = !d.reference_url;
+      $('refBox').hidden = !d.reference_url;
+      if (d.reference_url) $('refImg').src = d.reference_url;
+      else $('refImg').removeAttribute('src');
+      renderResults(d.images);
+      $('progressFill').style.width = (d.count ? Math.round(d.completed / d.count * 100) : 0) + '%';
+      setStatus(statusText(d) + (!d.can_retry ? '（旧任务未保存参考图，重新上传后可生成）' : ''), d.failed > 0);
+      $('resumePoll').hidden = true;
+      if (busy) pollTimer = setTimeout(() => pollJob(id), 800);
+      else { finishGenerating(); loadHistory(); }
+    } catch (e) {
+      if (id !== jobId) return;
+      setStatus('查询失败：' + e.message + '。任务可能仍在运行，请重新查询。', true);
+      $('resumePoll').hidden = false;
+    }
+  }
+  function finishGenerating() {
+    setBusy(false);
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+  }
+  async function loadHistory() {
+    try {
+      const r = await fetch('/api/demo/jobs');
+      if (!r.ok) return;
+      const d = await r.json();
+      $('history').replaceChildren(new Option('选择历史任务', ''));
+      const labels = {success:'完成',partial:'部分完成',failed:'失败',canceled:'已取消',interrupted:'已中断',generating:'生成中',canceling:'取消中'};
+      d.jobs.forEach(j => $('history').add(new Option(`${new Date(j.created_at * 1000).toLocaleString()} · ${j.sku} · ${labels[j.status] || j.status} · ${j.succeeded}/${j.count}`, j.job_id)));
+      $('history').value = jobId || '';
+    } catch (e) { /* History can be reloaded on the next visit. */ }
+  }
+  function rememberJob(id) { try { localStorage.setItem('aiside.lastJob', id); } catch (e) {} }
+  function openJob(id) {
+    if (pollTimer) clearTimeout(pollTimer);
+    closeLightbox();
+    jobId = id; selectedId = null; rememberJob(id); setBusy(true); pollJob(id);
+  }
+  $('history').addEventListener('change', () => { if ($('history').value && !generating) openJob($('history').value); });
+  $('resumePoll').addEventListener('click', () => { if (jobId) pollJob(jobId); });
+  async function doGenerate() {
+    if (!selFiles.length) { setStatus('请先上传商品图', true); return; }
+    if (!selectedPresetId) { setStatus('请先选择场景预设', true); return; }
+    if (generating || pendingUploads) return;
+    if (!$('seed').checkValidity()) { $('seed').reportValidity(); return; }
+    setBusy(true);
+    $('cancelBtn').disabled = true;
+    setStatus('提交中…', false);
+    Studio.updateJob({id:'image:submitting',type:'image',name:'商品生图提交',status:'generating',progress:0});
+    $('progressWrap').hidden = false;
+    $('progressFill').style.width = '0%';
+    try {
+      const fd = buildForm(count);
+      const r = await fetch('/api/demo/generate', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+      Studio.removeJob('image:submitting');
+      jobId = d.job_id; rememberJob(jobId);
+      closeLightbox(); selectedId = null;
+      $('cancelBtn').disabled = false;
+      $('zipBtn').disabled = true;
+      $('refBadge').hidden = false;
+      renderQa(d.qa);
+      pollJob(jobId);
+    } catch (e) { Studio.updateJob({id:'image:submitting',type:'image',name:'提交失败，可重新生成',status:'failed',progress:0}); setStatus('提交失败：' + e.message, true); finishGenerating(); }
+  }
+  function renderQa(qa) {
+    if (!qa || !qa.length) { $('qaWarn').textContent = ''; return; }
+    const lines = [];
+    qa.forEach(q => {
+      if (q.warnings && q.warnings.length) lines.push('图' + (q.index + 1) + '：' + q.warnings.join('；'));
+    });
+    $('qaWarn').textContent = lines.join('　');
+  }
+  async function retryImage(id, seedMode) {
+    if (!jobId || generating || !jobCanRetry) return;
+    const idx = results.findIndex(r => r && r.id === id);
+    if (idx < 0) return;
+    setBusy(true);
+    setStatus('正在提交重绘…', false);
+    try {
+      const r = await fetch('/api/demo/jobs/' + jobId + '/retry', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ indices: [idx], seed_mode: seedMode })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+      closeLightbox();
+      pollJob(jobId);
+    } catch (e) { setStatus('重绘提交失败：' + e.message, true); $('resumePoll').hidden = false; await pollJob(jobId); }
+  }
+
+  $('generateBtn').addEventListener('click', doGenerate);
+  $('cancelBtn').addEventListener('click', async () => {
+    if (!jobId) return;
+    $('cancelBtn').disabled = true;
+    try {
+      const r = await fetch('/api/demo/jobs/' + jobId + '/cancel', { method: 'POST' });
+      if (!r.ok) throw new Error('取消请求失败，请重试');
+      setStatus('正在取消：已发出的请求仍需等待返回，成功图片会保留', false);
+    } catch (e) { setStatus(e.message, true); $('cancelBtn').disabled = false; }
+  });
+  window.addEventListener('beforeunload', (e) => { if (generating) { e.preventDefault(); e.returnValue = ''; } });
+
+  $('exportBtn').addEventListener('click', () => {
+    const img = results.find(r => r && r.id === selectedId);
+    if (!img || img.status !== 'success') return;
+    const a = document.createElement('a'); a.href = img.data_url; a.download = downloadName(img);
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  $('zipBtn').addEventListener('click', async () => {
+    if (!jobId) return;
+    $('zipBtn').disabled=true;
+    try {
+      const response=await fetch('/api/demo/export?session_id='+encodeURIComponent(jobId));
+      if (!response.ok) { const d=await response.json(); throw new Error(d.detail || '导出失败'); }
+      Studio.downloadBlob(await response.blob(),jobId+'.zip');
+    } catch(e) { setStatus('导出失败：'+e.message,true); Studio.notice('图片导出失败：'+e.message); }
+    finally { $('zipBtn').disabled=!results.some(i=>i && i.status==='success'); }
+  });
+
+
+  async function initialize() {
+    await loadPresets();
+    await loadHistory();
+    try {
+      const id = localStorage.getItem('aiside.lastJob');
+      if (id && [...$('history').options].some(o => o.value === id)) openJob(id);
+    } catch (e) {}
+    refreshSizeHint();
+    if (!results.length) renderResults([]);
+  }
+  initialize();
+</script>
+<script src="/video.js"></script>
+<script src="/video-intent.js"></script>
+<script src="/video-graph.js"></script>
+<script src="/ad-prompts.js"></script>
+</body>
+</html>

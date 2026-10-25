@@ -1,0 +1,10 @@
+# 质检阈值（可编辑配置）。数值为骨架默认占位，正式阈值待实测回填。
+qa:
+  min_width: 512
+  min_height: 512
+  max_aspect_ratio: 2.0      # 宽高比上限（超出视为构图异常，供提示）
+  min_sharpness: 0.0         # 清晰度占位阈值（真实模型接入后启用）
+  reject_blur: false         # 模糊/遮挡拦截开关（真实质检模型接入后置 true）
+fidelity:
+  batch_similarity_min: 0.85 # 批次一致性分目标（DINO 相似度均值，待实测）
+  single_fidelity_min: 0.0   # 单图保真度占位阈值

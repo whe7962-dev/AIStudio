@@ -1,0 +1,880 @@
+{
+  "root": "/Users/Admin/Documents/deepseek-harness/default-workspace/ai-studio-test/最终PRD/端侧AIStudio/skeleton",
+  "title": "端侧AIStudio（skeleton 后端骨架）",
+  "intent": {
+    "title": "端侧AIStudio（skeleton 后端骨架）",
+    "one_liner": "给电商内容与设计人员在 macOS 本地画布上把商品素材做成各渠道规格的成品图，从照片摄入、一致性生图、质检到打包导出，全程本地推理、默认不出网。",
+    "product_summary": "这是「端侧AIStudio」的 Python 后端骨架，正式产品是原生 macOS 桌面画布应用（Swift/SwiftUI），本包通过本地 HTTP 提供推理与图像处理管线。骨架用 FastAPI 承载工具分发、权限、钩子、项目图、任务队列与观测，并内置一条确定性的电商闭环 demo（stub provider 可离线跑通）。8 个领域工具覆盖素材摄入质检、一致性锚点、生图、保真度评分与批量质检、后处理打包、项目图编辑、资产库、模型管理。红线是默认不出网（仅放行 demo 生图域名）、无云端兜底、不静默失败（重试 + 降级链 + 标记 degraded）。大量真实能力（本地模型推理、渠道规格、质检阈值、模型下载热切换）仍是占位实现，README 已标注为待确认项。",
+    "facts": {
+      "goal": {
+        "value": "在 macOS 本地画布上完成电商商品图的批量生产：素材摄入与质检 → 建立主体一致性锚点 → 生成图像 → 保真度评分与批量质检 → 后处理并按渠道规格打包导出。产品目标可溯源且清晰；但可量化的成功标准材料未给出，README 仅提到 GET /metrics「对齐 PRD 成功指标」，具体指标数值待确认。",
+        "status": "明确",
+        "source": "README 开头「正式产品为原生 macOS 桌面画布应用…本包作为本地推理与图像处理管线」；8 个领域工具清单；「GET /metrics 指标快照（对齐 PRD 成功指标）」"
+      },
+      "users": {
+        "value": "面向使用 macOS 桌面画布应用的电商内容生产者（运营/设计/内容创作者），非工程用户；操作方式是人提任务、Agent 跑流水线、关键操作由人 ask 确认。任务形态以异步 job 为主（POST /projects/{pid}/jobs 走队列），也支持同步工具调用（POST /projects/{pid}/tools/{tool}）。具体人机比、是单人本地使用还是团队协作、同步/异步的配比，材料未说明。",
+        "status": "待确认",
+        "source": "README「正式产品为原生 macOS 桌面画布应用（Swift/SwiftUI）作为前端」；API 速览中 POST /projects/{pid}/jobs「提交异步任务（走队列）」与 POST /projects/{pid}/tools/{tool}「同步调用工具」；dispatch.py 说明中「loop + hooks + 权限 + 重试」"
+      },
+      "core_loop": {
+        "value": "一次完整闭环：用户上传商品照片 → ingest_and_qa_photos 摄入并质检 → build_consistency_anchor 建立主体一致性锚点 → generate_image 按渠道规格生成 → score_fidelity_and_batch_qa 评分与批量质检（不过则按降级链重试/降级并标 degraded）→ postprocess_and_package 后处理打包 → 导出需用户确认后落盘；全过程资产进资产库、进度写项目图与 job journal。骨架里这条闭环由 pipeline.py 以确定性顺序跑通（demo 可用 stub provider 离线执行）。",
+        "status": "明确",
+        "source": "README 8 个领域工具与「离线跑通电商闭环（stub provider，无需任何密钥）」「./scripts/dev.sh demo # 离线闭环」；目录中 aiside/pipeline.py「确定性电商闭环 demo」、aiside/plan.py、core/job_journal.py"
+      },
+      "deliverable": {
+        "value": "主要交付物是图像资产：按渠道规格产出的成品图，经 postprocess_and_package 打包导出（导出属 ask 类操作，未确认不落盘）；同时产出项目图（DAG）状态、资产库条目（含去重）、质检评分与审计/journal 记录。导出包的具体格式与命名规范待确认（config/naming_rules.yaml 未在 README 说明内容）。",
+        "status": "明确",
+        "source": "README「导出/破坏性操作需确认，未确认不落盘」；API 中「GET /projects/{pid}/assets/{cid} 取资产字节」；tools 中 postprocess_and_package、asset_store；config/naming_rules.yaml"
+      },
+      "boundaries": {
+        "value": "明确不做的四件事：一、默认不出网，网络出口白名单只放行 DEMO_BASE_URL 域名，其余出网请求一律 deny 并审计；二、无云端兜底，正式版只接本地推理（Apple MLX/Core ML），Seedream 仅作原型验证；三、不静默失败，生成失败自动重试 1 次后按降级链逐级降级并标 degraded；四、破坏性/导出操作必须确认，未确认不落盘。另有密钥纪律：demo key 不入库、不进 git、不进日志、不进 PRD、不写进代码。",
+        "status": "明确",
+        "source": "README「红线落地」1-3 条；「demo 期生图（豆包 Seedream）」中密钥与白名单说明；目录 permissions/policy.py「默认拒绝 + ask 确认」、hooks「网络出口审计」"
+      },
+      "constraints": {
+        "value": "已知约束：本地 HTTP 通信，默认监听 127.0.0.1:8765；任务调度为单执行道 + 优先级队列 + step 边界抢占（非并发多道）；provider 抽象为 stub / seedream 双实现，正式版换本地推理（FLUX/Qwen-Image 的 MLX/Core ML 接入待硬化）；渠道尺寸、质检/一致性阈值、模型注册表均为可编辑配置且当前为示例/占位值。未给出：单张或批量生成的时延目标、并发上限、成本预算、合规要求。",
+        "status": "待确认",
+        "source": "README「启动本地 HTTP 服务（默认 127.0.0.1:8765）」；组件映射表「s11 后台任务 core/scheduler.py（单执行道 + 优先级队列 + step 边界抢占）」；「⚠️ 按默认假设实现（待确认项）」四条；config/ 下 channels.yaml、qa_thresholds.yaml、model_registry.yaml、scheduling.yaml"
+      }
+    },
+    "features": {
+      "destructive_ops": {
+        "value": "yes",
+        "evidence": "README 红线写明「导出/破坏性操作需确认，未确认不落盘」，permissions/policy.py 实现「默认拒绝上传、ask 确认、审计」，并有 POST /jobs/{jid}/confirm 承接用户确认。"
+      },
+      "audit_needed": {
+        "value": "yes",
+        "evidence": "core/audit.py 与 hooks/manager.py 实现 Pre/PostToolUse 钩子与网络出口审计，出网请求 deny + 审计，job_journal 记录任务过程。"
+      },
+      "multi_step": {
+        "value": "yes",
+        "evidence": "plan.py 提供 TodoList、pipeline.py 生成确定性计划，core/job_journal.py 做 checkpoint/续跑，scheduler 支持 step 边界抢占，任务可经 POST /projects/{pid}/jobs 异步推进并查询状态。"
+      },
+      "context_heavy": {
+        "value": "unknown",
+        "evidence": "骨架有 aiside/core/context.py，但 README 与扫描线索均未体现上下文压缩或可并行探索型子任务，仅有单执行道队列，属推测项。"
+      },
+      "large_knowledge": {
+        "value": "no",
+        "evidence": "领域知识只落为 5 个 YAML 规格/阈值/注册表配置，未见知识库、检索或按需加载机制。"
+      },
+      "long_sessions": {
+        "value": "unknown",
+        "evidence": "材料未描述会话时长或工具输出/日志体量；虽有 logging_config 与 metrics，但无长会话上下文的处理证据。"
+      },
+      "cross_session_memory": {
+        "value": "no",
+        "evidence": "持久化的是项目图、资产库与 job journal（项目状态），未见跨会话记住用户偏好/决策/历史的机制。"
+      },
+      "persistent_goals": {
+        "value": "yes",
+        "evidence": "README 组件映射「s10 任务系统 core/project_graph.py + core/job_journal.py（checkpoint/续跑）」，任务可提交到队列并断点续跑。"
+      },
+      "slow_operations": {
+        "value": "yes",
+        "evidence": "生图与批量质检属长耗时操作，API 提供 POST /projects/{pid}/jobs 异步任务 + 队列 + 状态查询，不阻塞主流程。"
+      },
+      "scheduled": {
+        "value": "no",
+        "evidence": "core/scheduler.py 是单执行道 + 优先级队列的后台任务调度，README 与 API 均无定时/cron 触发入口。"
+      },
+      "parallel_isolated": {
+        "value": "no",
+        "evidence": "调度明确为「单执行道 + 优先级队列 + step 边界抢占」，材料未见多 Agent 并行或工作区隔离设计。"
+      },
+      "external_ecosystem": {
+        "value": "no",
+        "evidence": "外部依赖仅 provider 抽象的 stub/seedream 两家，且默认不出网白名单封锁出网，未见 MCP 或第三方插件接入。"
+      },
+      "fixed_orchestration": {
+        "value": "later",
+        "evidence": "当前 pipeline.py 是「确定性电商闭环 demo」的固定阶段序列，但 dispatch.py 注明「确定性分派；真实 LLM 循环接入后替换 driver」，正式版流程将由模型临场决策。"
+      },
+      "auto_completion": {
+        "value": "later",
+        "evidence": "有 score_fidelity_and_batch_qa 评分工具与 config/qa_thresholds.yaml 阈值、失败重试与降级链，但阈值当前为占位值，未见独立的完成判定评估器。"
+      }
+    },
+    "unknowns": [
+      "正式版要对齐的 PRD 成功指标具体是哪些数值（生成成功率、返修率、单图耗时、吞吐）？/metrics 现在统计了哪些字段？",
+      "目标渠道有哪些？config/channels.yaml 里的示例尺寸要按哪些平台规范回填（尺寸、比例、文件格式、体积上限）？",
+      "质检与一致性阈值的真实取值是多少？用什么指标判定「主体保真」与「批次一致」？",
+      "macOS 前端与 Python 后端的进程边界最终怎么定：子进程起 FastAPI 服务、内嵌解释器，还是别的？端口冲突与生命周期由谁管？",
+      "正式版要接哪些本地模型（FLUX、Qwen-Image 的 MLX/Core ML 版本）？模型从哪来、怎么下载与热切换、占用多少磁盘与内存？",
+      "单张图与单批次的时延目标、可接受的并发上限、以及 demo 期调用豆包 Seedream 的成本预算是多少？",
+      "典型用户是单人本地创作还是团队共享？如果是团队，项目图与资产库如何共享、是否需要多用户权限？",
+      "导出交付物最终长什么样：打包成什么格式、按什么命名规范、是否需要附带质检报告或元数据？",
+      "哪些操作必须走 ask 确认（上传、导出、删除资产、切换模型）？确认超时或拒绝后的默认行为是什么？",
+      "是否需要定时或批量自动任务（例如每日批量出图），还是完全由用户手动触发？",
+      "数据合规边界：商品照片与生成结果是否允许任何形式出网（哪怕是统计埋点）？本地数据留存与清理策略是什么？",
+      "是否需要跨项目记住品牌调性、命名偏好或历史决策？"
+    ]
+  },
+  "prd_extract": {
+    "title": "端侧AIStudio",
+    "one_liner": "给没有设计团队的电商运营和中小商家，在本地设备上把商品实拍批量变成符合各电商平台规格的素材包，解决请不起设计师、素材不敢上传云端、多 SKU 风格漂移的痛点",
+    "facts": {
+      "goal": {
+        "value": "把「生成一张图」变成「可批量、可复用、可交付的生产线」。成功标准：北极星 = 首轮采纳率（每 SKU 默认 4 张草稿中直接选用或仅微调即选用的比例）、初稿到定稿耗时（单 SKU × 5 平台 p95 ≤ 30min，待实测）；过程指标 = 批次一致性分 ≥ 0.85、导出一次通过率 ≥ 90%、任务恢复率 100%（均待实测）。",
+        "status": "明确",
+        "source": "一句话：把「生成一张图」变成「可批量、可复用、可交付的生产线」；指标：北极星=首轮采纳率、初稿到定稿耗时；单 SKU × 5 平台 p95 ≤ 30min（待实测）"
+      },
+      "users": {
+        "value": "主用户：没有设计团队的电商运营和中小商家，单机单用户为主，以异步批处理方式使用（提交批量任务后等待草稿和终稿）。副用户（二期）：3–10 人短剧小团队。",
+        "status": "明确",
+        "source": "主场景：电商素材。用户：没有设计团队的电商运营/中小商家……副场景：短剧分镜。用户：3–10 人小团队；已确认：只做电商全链路（P1–P7 + E1–E3）；短剧 D1–D5 整体移入二期"
+      },
+      "core_loop": {
+        "value": "电商闭环（V1）：新建 SKU → 上传 3–5 张实拍 → 自动抠图/质检 → 生成一致性锚点 → 选渠道模板 → 批量草稿 → 选优/局部重绘 → 终稿 → 后处理/导出 → 归档复用。核心细节：所有模块读写同一张项目图（DAG），改一个节点只重算下游，导出前需用户确认。",
+        "status": "明确",
+        "source": "电商：新建 SKU → 上传 3–5 张实拍 → 自动抠图/质检 → 生成锚点 → 选渠道模板 → 批量草稿 → 选优/局部重绘 → 终稿 → 后处理/导出 → 归档复用。"
+      },
+      "deliverable": {
+        "value": "按渠道规格裁切、命名、打包的电商素材包（覆盖淘宝/天猫/京东/拼多多/抖音 5 个平台），以及可复用的项目图（DAG）和内容寻址资产库；交付前需用户确认导出。",
+        "status": "明确",
+        "source": "交付物：按渠道规格裁切/命名/打包的电商素材包 + 可复用的项目图（DAG + 内容寻址资产库）；FR6 后处理与导出：裁切、文字、水印、命名、格式、打包；导出前需用户确认。"
+      },
+      "boundaries": {
+        "value": "红线：用户上传的商品图、参考图、生成物默认永不离开设备，除用户显式勾选外不触发任何上传；全部推理在本地完成、无云端兜底（仅 demo 可用 API 验证链路）；不静默失败，降级必须可见。非目标：不做通用聊天助手、云端设计平台、云端协作、专业剪辑、模型训练平台；短剧二期也不做长片/配音/配乐。",
+        "status": "明确",
+        "source": "边界：不做通用聊天、云端协作、专业剪辑、模型训练平台；短剧不做长片/配音/配乐。用户素材不离开设备；非目标：不做通用聊天；不做云端协作；不做专业剪辑；不做模型训练平台"
+      },
+      "constraints": {
+        "value": "全部推理本地完成、无云端兜底；MVP 设备 = Apple Silicon 32GB 统一内存（NVIDIA 24GB VRAM 为二期/扩展）；原生 macOS App；延迟包络 = 草稿首图 p95 ≤ 10s、终稿单图 p95 ≤ 2min（均待实测）；单执行道 + 优先级队列 + 交互插队 + step 边界抢占 + 每 N 步 checkpoint + job journal 崩溃续跑 + OOM 降级链；推理层做 provider 抽象，正式版切本地。",
+        "status": "明确",
+        "source": "约束：全部推理本地完成、无云端兜底；MVP 设备 = Apple Silicon 32GB 统一内存；延迟包络：草稿首图 p95≤10s、终稿单图 p95≤2min（待实测）；单执行道 + 优先级队列 + 崩溃续跑；桌面应用形态：原生 macOS App（Apple Silicon）"
+      }
+    },
+    "features": {
+      "destructive_ops": {
+        "value": "yes",
+        "evidence": "触碰用户商品图、参考图、生成物等隐私敏感素材，且含导出写盘与归档动作，红线1规定只有用户显式勾选后才可上传。"
+      },
+      "audit_needed": {
+        "value": "yes",
+        "evidence": "FR12 隐私保护要求「所有网络行为可审计」，另有 job journal 记录任务全过程。"
+      },
+      "multi_step": {
+        "value": "yes",
+        "evidence": "单次交付是 10 步电商链路（新建 SKU 至归档复用），含优先级队列、step 边界抢占、checkpoint 与崩溃续跑，批量任务需汇报进展并支持中断。"
+      },
+      "context_heavy": {
+        "value": "no",
+        "evidence": "项目状态由 DAG 项目图加内容寻址资产库承载、单执行道串行执行，没有需要塞进模型上下文的大规模并行探索型子任务。"
+      },
+      "large_knowledge": {
+        "value": "no",
+        "evidence": "领域知识仅为 5 个电商平台的渠道规格表与模板，且 FR3 明确写成可编辑配置，不属于需要按需加载的庞大知识库。"
+      },
+      "long_sessions": {
+        "value": "yes",
+        "evidence": "单 SKU 默认 4 张草稿 × 5 平台 × 多 SKU 的批任务，叠加 job journal 逐任务记录与批次 QA 报告，单次运行产出与日志量很大。"
+      },
+      "cross_session_memory": {
+        "value": "yes",
+        "evidence": "主流程末端为「归档复用」，配合项目图自动保存与撤销历史，需跨会话保留既有 SKU 的锚点、模板与生成决策。"
+      },
+      "persistent_goals": {
+        "value": "yes",
+        "evidence": "FR5 明确 job journal + 崩溃续跑 + 每 N 步 checkpoint，任务恢复率目标 100%，目标与进度必须持久化并可续跑。"
+      },
+      "slow_operations": {
+        "value": "yes",
+        "evidence": "终稿单图 p95 ≤ 2min、单 SKU × 5 平台整体 p95 ≤ 30min，采用草稿/终稿双轨与后台渲染，不阻塞主流程。"
+      },
+      "scheduled": {
+        "value": "no",
+        "evidence": "闭环由用户手动「新建 SKU」触发批任务，输入全文无定时或周期自动触发的需求。"
+      },
+      "parallel_isolated": {
+        "value": "no",
+        "evidence": "调度策略明确为「单执行道 + 优先级队列、交互插队批任务、step 边界抢占」，不并行执行，也没有多工作区隔离。"
+      },
+      "external_ecosystem": {
+        "value": "yes",
+        "evidence": "FR13 平台对接（可插拔）：需对接设备/OS 级账号、授权、配额与跨应用算力调度，另 FR11 需推理 provider 抽象。"
+      },
+      "fixed_orchestration": {
+        "value": "no",
+        "evidence": "电商链路虽为固定阶段序列，但含模型临场判断分支：自动 QA、保真度评分判定是否重算、OOM/失败降级链选择小模型或非生成式管线。"
+      },
+      "auto_completion": {
+        "value": "no",
+        "evidence": "FR6 明确导出前需用户确认，闭环终点由人判定；自动 QA 与保真度评分只用于质量打分，不负责判定任务已完成。"
+      }
+    },
+    "unknowns": [
+      "北极星指标（首轮采纳率、初稿到定稿耗时）的目标值当前均为「待实测」：基线如何采集、多久后用实测值回填并锁定验收阈值？",
+      "目标用户的使用频率与批量规模是多少（每天或每周处理多少 SKU、单次批量上限多少）？这决定单执行道调度是否够用。",
+      "账号/授权/算力调度具体对接哪个 OS 能力或哪家平台，还是一期纯假设？接口契约由谁提供？",
+      "5 个电商平台的渠道规格表数据来自哪里（官方规格文档还是人工录入）、由谁维护、多久更新一次？规格不符时如何校验？",
+      "失败与异常的处理策略细节：模型下载失败或授权失效、单任务超时上限、OOM 降级链的具体降级顺序与用户提示文案，分别如何处理？",
+      "团队与时间约束尚未确认（现按 2–3 人、8 周出 MVP 假设收口），确认后是否需要重新裁剪 V1 的 P1–P7 + E1–E3 范围？",
+      "导出后是否需要回流任何结果数据（例如采纳率埋点如何采集与存储，是否受「素材不离开设备」红线约束）？"
+    ]
+  },
+  "components": [
+    {
+      "id": "s01",
+      "name": "Agent Loop",
+      "decision": "必选",
+      "reason": "一切基础：循环 + 工具（一切基础，恒选）",
+      "feature": ""
+    },
+    {
+      "id": "s02",
+      "name": "工具系统",
+      "decision": "必选",
+      "reason": "需要调用外部系统/API/数据源（一切基础，恒选）",
+      "feature": ""
+    },
+    {
+      "id": "s03",
+      "name": "权限系统",
+      "decision": "必选",
+      "reason": "触碰用户商品图、参考图、生成物等隐私敏感素材，且含导出写盘与归档动作，红线1规定只有用户显式勾选后才可上传。",
+      "feature": "destructive_ops"
+    },
+    {
+      "id": "s04",
+      "name": "钩子系统",
+      "decision": "必选",
+      "reason": "FR12 隐私保护要求「所有网络行为可审计」，另有 job journal 记录任务全过程。",
+      "feature": "audit_needed"
+    },
+    {
+      "id": "s05",
+      "name": "任务规划",
+      "decision": "必选",
+      "reason": "单次交付是 10 步电商链路（新建 SKU 至归档复用），含优先级队列、step 边界抢占、checkpoint 与崩溃续跑，批量任务需汇报进展并支持中断。",
+      "feature": "multi_step"
+    },
+    {
+      "id": "s06",
+      "name": "子 Agent",
+      "decision": "放弃",
+      "reason": "项目状态由 DAG 项目图加内容寻址资产库承载、单执行道串行执行，没有需要塞进模型上下文的大规模并行探索型子任务。",
+      "feature": "context_heavy"
+    },
+    {
+      "id": "s07",
+      "name": "技能加载",
+      "decision": "放弃",
+      "reason": "领域知识仅为 5 个电商平台的渠道规格表与模板，且 FR3 明确写成可编辑配置，不属于需要按需加载的庞大知识库。",
+      "feature": "large_knowledge"
+    },
+    {
+      "id": "s08",
+      "name": "上下文压缩",
+      "decision": "必选",
+      "reason": "单 SKU 默认 4 张草稿 × 5 平台 × 多 SKU 的批任务，叠加 job journal 逐任务记录与批次 QA 报告，单次运行产出与日志量很大。",
+      "feature": "long_sessions"
+    },
+    {
+      "id": "s09",
+      "name": "记忆系统",
+      "decision": "必选",
+      "reason": "主流程末端为「归档复用」，配合项目图自动保存与撤销历史，需跨会话保留既有 SKU 的锚点、模板与生成决策。",
+      "feature": "cross_session_memory"
+    },
+    {
+      "id": "s10",
+      "name": "任务系统",
+      "decision": "必选",
+      "reason": "FR5 明确 job journal + 崩溃续跑 + 每 N 步 checkpoint，任务恢复率目标 100%，目标与进度必须持久化并可续跑。",
+      "feature": "persistent_goals"
+    },
+    {
+      "id": "s11",
+      "name": "后台任务",
+      "decision": "必选",
+      "reason": "终稿单图 p95 ≤ 2min、单 SKU × 5 平台整体 p95 ≤ 30min，采用草稿/终稿双轨与后台渲染，不阻塞主流程。",
+      "feature": "slow_operations"
+    },
+    {
+      "id": "s12",
+      "name": "定时调度",
+      "decision": "放弃",
+      "reason": "闭环由用户手动「新建 SKU」触发批任务，输入全文无定时或周期自动触发的需求。",
+      "feature": "scheduled"
+    },
+    {
+      "id": "s13",
+      "name": "Agent 团队",
+      "decision": "放弃",
+      "reason": "调度策略明确为「单执行道 + 优先级队列、交互插队批任务、step 边界抢占」，不并行执行，也没有多工作区隔离。",
+      "feature": "parallel_isolated"
+    },
+    {
+      "id": "s14",
+      "name": "MCP 插件",
+      "decision": "必选",
+      "reason": "FR13 平台对接（可插拔）：需对接设备/OS 级账号、授权、配额与跨应用算力调度，另 FR11 需推理 provider 抽象。",
+      "feature": "external_ecosystem"
+    },
+    {
+      "id": "s15",
+      "name": "集成 Harness",
+      "decision": "必选",
+      "reason": "第一版已选 8 个可选组件（s03, s04, s05, s08, s09, s10, s11, s14），需归一到单一循环",
+      "feature": ""
+    },
+    {
+      "id": "s16",
+      "name": "工作流运行时",
+      "decision": "放弃",
+      "reason": "电商链路虽为固定阶段序列，但含模型临场判断分支：自动 QA、保真度评分判定是否重算、OOM/失败降级链选择小模型或非生成式管线。",
+      "feature": "fixed_orchestration"
+    },
+    {
+      "id": "s17",
+      "name": "目标闭环",
+      "decision": "放弃",
+      "reason": "FR6 明确导出前需用户确认，闭环终点由人判定；自动 QA 与保真度评分只用于质量打分，不负责判定任务已完成。",
+      "feature": "auto_completion"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "s01",
+      "name": "Agent Loop",
+      "expected": "必选",
+      "present": "none",
+      "verdict": "缺失",
+      "priority": "P0",
+      "reason": "一切基础：循环 + 工具（一切基础，恒选）",
+      "evidence": [],
+      "readme": "s01_agent_loop/README.md"
+    },
+    {
+      "id": "s08",
+      "name": "上下文压缩",
+      "expected": "必选",
+      "present": "none",
+      "verdict": "缺失",
+      "priority": "P0",
+      "reason": "单 SKU 默认 4 张草稿 × 5 平台 × 多 SKU 的批任务，叠加 job journal 逐任务记录与批次 QA 报告，单次运行产出与日志量很大。",
+      "evidence": [],
+      "readme": "s08_context_compact/README.md"
+    },
+    {
+      "id": "s09",
+      "name": "记忆系统",
+      "expected": "必选",
+      "present": "none",
+      "verdict": "缺失",
+      "priority": "P0",
+      "reason": "主流程末端为「归档复用」，配合项目图自动保存与撤销历史，需跨会话保留既有 SKU 的锚点、模板与生成决策。",
+      "evidence": [],
+      "readme": "s09_memory/README.md"
+    },
+    {
+      "id": "s10",
+      "name": "任务系统",
+      "expected": "必选",
+      "present": "none",
+      "verdict": "缺失",
+      "priority": "P0",
+      "reason": "FR5 明确 job journal + 崩溃续跑 + 每 N 步 checkpoint，任务恢复率目标 100%，目标与进度必须持久化并可续跑。",
+      "evidence": [],
+      "readme": "s10_task_system/README.md"
+    },
+    {
+      "id": "s14",
+      "name": "MCP 插件",
+      "expected": "必选",
+      "present": "none",
+      "verdict": "缺失",
+      "priority": "P0",
+      "reason": "FR13 平台对接（可插拔）：需对接设备/OS 级账号、授权、配额与跨应用算力调度，另 FR11 需推理 provider 抽象。",
+      "evidence": [],
+      "readme": "s14_mcp_plugin/README.md"
+    },
+    {
+      "id": "s15",
+      "name": "集成 Harness",
+      "expected": "必选",
+      "present": "none",
+      "verdict": "缺失",
+      "priority": "P0",
+      "reason": "第一版已选 8 个可选组件（s03, s04, s05, s08, s09, s10, s11, s14），需归一到单一循环",
+      "evidence": [],
+      "readme": "s15_integrated_harness/README.md"
+    },
+    {
+      "id": "s02",
+      "name": "工具系统",
+      "expected": "必选",
+      "present": "weak",
+      "verdict": "薄弱",
+      "priority": "P1",
+      "reason": "需要调用外部系统/API/数据源（一切基础，恒选）",
+      "evidence": [
+        "aiside/pipeline.py:43 `def run_ecommerce_demo(settings: Settings | None = None, workspace: Workspace | None = None,`"
+      ],
+      "readme": "s02_tool_use/README.md"
+    },
+    {
+      "id": "s12",
+      "name": "定时调度",
+      "expected": "放弃",
+      "present": "strong",
+      "verdict": "可能多余",
+      "priority": "info",
+      "reason": "闭环由用户手动「新建 SKU」触发批任务，输入全文无定时或周期自动触发的需求。",
+      "evidence": [
+        "aiside/workspace.py:17 `from .core.scheduler import Scheduler`",
+        "aiside/workspace.py:39 `self.scheduler = Scheduler()`",
+        "aiside/workspace.py:45 `self.scheduler.start()`",
+        "aiside/workspace.py:123 `self.scheduler.submit(`"
+      ],
+      "readme": "s12_cron_scheduler/README.md"
+    },
+    {
+      "id": "s16",
+      "name": "工作流运行时",
+      "expected": "放弃",
+      "present": "strong",
+      "verdict": "可能多余",
+      "priority": "info",
+      "reason": "电商链路虽为固定阶段序列，但含模型临场判断分支：自动 QA、保真度评分判定是否重算、OOM/失败降级链选择小模型或非生成式管线。",
+      "evidence": [
+        "aiside/workspace.py:15 `from .core.job_journal import AWAITING_CONFIRMATION, JobJournal`",
+        "aiside/workspace.py:77 `journal = JobJournal(project_dir / \"journal.sqlite3\")`",
+        "aiside/workspace.py:79 `project=graph, assets=assets, journal=journal,`",
+        "aiside/workspace.py:94 `journal=JobJournal(project_dir / \"journal.sqlite3\"),`"
+      ],
+      "readme": "s16_workflow_runtime/README.md"
+    },
+    {
+      "id": "s03",
+      "name": "权限系统",
+      "expected": "必选",
+      "present": "strong",
+      "verdict": "已具备",
+      "priority": "-",
+      "reason": "触碰用户商品图、参考图、生成物等隐私敏感素材，且含导出写盘与归档动作，红线1规定只有用户显式勾选后才可上传。",
+      "evidence": [
+        "aiside/api.py:7 `from .errors import ConfirmationRequired, PermissionDenied, ToolExecutionError`",
+        "aiside/api.py:49 `decision = ws.check_permission(project_id, body.tool, body.params)`",
+        "aiside/api.py:50 `if decision.action == \"deny\":`",
+        "aiside/api.py:66 `except PermissionDenied as exc:`"
+      ],
+      "readme": "s03_permission/README.md"
+    },
+    {
+      "id": "s04",
+      "name": "钩子系统",
+      "expected": "必选",
+      "present": "strong",
+      "verdict": "已具备",
+      "priority": "-",
+      "reason": "FR12 隐私保护要求「所有网络行为可审计」，另有 job journal 记录任务全过程。",
+      "evidence": [
+        "aiside/dispatch.py:1 `\"\"\"工具分发器：loop + 工具分派 + hooks + 权限 + 重试 + 观测。`",
+        "aiside/dispatch.py:15 `from .hooks.manager import HookContext, HookManager`",
+        "aiside/dispatch.py:26 `def __init__(self, settings, policy: PermissionPolicy, hooks: HookManager,`",
+        "aiside/dispatch.py:30 `self.hooks = hooks`"
+      ],
+      "readme": "s04_hooks/README.md"
+    },
+    {
+      "id": "s05",
+      "name": "任务规划",
+      "expected": "必选",
+      "present": "strong",
+      "verdict": "已具备",
+      "priority": "-",
+      "reason": "单次交付是 10 步电商链路（新建 SKU 至归档复用），含优先级队列、step 边界抢占、checkpoint 与崩溃续跑，批量任务需汇报进展并支持中断。",
+      "evidence": [
+        "aiside/pipeline.py:55 `todo = TodoList()`",
+        "aiside/pipeline.py:58 `t_ingest = todo.add(\"ingest_and_qa_photos\")`",
+        "aiside/pipeline.py:59 `todo.start(t_ingest.id)`",
+        "aiside/pipeline.py:65 `todo.done(t_ingest.id)`"
+      ],
+      "readme": "s05_todo_write/README.md"
+    },
+    {
+      "id": "s06",
+      "name": "子 Agent",
+      "expected": "放弃",
+      "present": "none",
+      "verdict": "不需要",
+      "priority": "-",
+      "reason": "项目状态由 DAG 项目图加内容寻址资产库承载、单执行道串行执行，没有需要塞进模型上下文的大规模并行探索型子任务。",
+      "evidence": [],
+      "readme": "s06_subagent/README.md"
+    },
+    {
+      "id": "s07",
+      "name": "技能加载",
+      "expected": "放弃",
+      "present": "none",
+      "verdict": "不需要",
+      "priority": "-",
+      "reason": "领域知识仅为 5 个电商平台的渠道规格表与模板，且 FR3 明确写成可编辑配置，不属于需要按需加载的庞大知识库。",
+      "evidence": [],
+      "readme": "s07_skill_loading/README.md"
+    },
+    {
+      "id": "s11",
+      "name": "后台任务",
+      "expected": "必选",
+      "present": "strong",
+      "verdict": "已具备",
+      "priority": "-",
+      "reason": "终稿单图 p95 ≤ 2min、单 SKU × 5 平台整体 p95 ≤ 30min，采用草稿/终稿双轨与后台渲染，不阻塞主流程。",
+      "evidence": [
+        "aiside/workspace.py:122 `ctx.journal.record(job_id, tool_name, params, project_id=project_id, status=\"queued\")`",
+        "aiside/workspace.py:128 `return {\"job_id\": job_id, \"status\": \"queued\"}`",
+        "aiside/core/job_journal.py:14 `QUEUED = \"queued\"`",
+        "aiside/core/job_journal.py:23 `_INCOMPLETE = {QUEUED, RUNNING, CHECKPOINT, AWAITING_CONFIRMATION}`"
+      ],
+      "readme": "s11_background_tasks/README.md"
+    },
+    {
+      "id": "s13",
+      "name": "Agent 团队",
+      "expected": "放弃",
+      "present": "none",
+      "verdict": "不需要",
+      "priority": "-",
+      "reason": "调度策略明确为「单执行道 + 优先级队列、交互插队批任务、step 边界抢占」，不并行执行，也没有多工作区隔离。",
+      "evidence": [],
+      "readme": "s13_agent_teams/README.md"
+    },
+    {
+      "id": "s17",
+      "name": "目标闭环",
+      "expected": "放弃",
+      "present": "none",
+      "verdict": "不需要",
+      "priority": "-",
+      "reason": "FR6 明确导出前需用户确认，闭环终点由人判定；自动 QA 与保真度评分只用于质量打分，不负责判定任务已完成。",
+      "evidence": [],
+      "readme": "s17_goal_loop/README.md"
+    }
+  ],
+  "acceptance": {
+    "runnable": {
+      "name": "可运行",
+      "status": "pass",
+      "evidence": [
+        "aiside/__main__.py",
+        "aiside/cli.py",
+        "aiside/main.py",
+        ".env.example"
+      ]
+    },
+    "fault_tolerant": {
+      "name": "可容错",
+      "status": "pass",
+      "evidence": [
+        "aiside/api.py:68",
+        "aiside/dispatch.py:101",
+        "aiside/pipeline.py:33",
+        "aiside/core/scheduler.py:109",
+        "aiside/providers/seedream.py:57",
+        "aiside/tools/generate.py:115"
+      ]
+    },
+    "observable": {
+      "name": "可观测",
+      "status": "pass",
+      "evidence": [
+        "aiside/api.py:29",
+        "aiside/dispatch.py:9",
+        "aiside/logging_config.py:8",
+        "aiside/main.py:8",
+        "aiside/pipeline.py:126",
+        "aiside/workspace.py:5"
+      ]
+    },
+    "testable": {
+      "name": "可测试",
+      "status": "pass",
+      "evidence": [
+        "tests/conftest.py",
+        "tests/test_asset_store.py",
+        "tests/test_permissions.py",
+        "tests/test_pipeline.py",
+        "tests/test_project_graph.py",
+        "tests/test_providers.py"
+      ]
+    },
+    "deployable": {
+      "name": "可部署",
+      "status": "partial",
+      "evidence": []
+    },
+    "measurable": {
+      "name": "可度量",
+      "status": "pass",
+      "evidence": [
+        "aiside/dispatch.py:82",
+        "aiside/observability/__init__.py:1",
+        "aiside/observability/metrics.py:1"
+      ]
+    }
+  },
+  "elements_missing": [
+    "知识：没有扫描到知识库、技能或检索的痕迹，领域知识从哪来不明",
+    "行动：没有扫描到任何模型 SDK 调用，这个项目可能还不是 Agent"
+  ],
+  "completion": 0.41,
+  "review": {
+    "ok": false,
+    "issues": [
+      {
+        "component": "s01",
+        "problem": "判为「缺失」站不住。差距表 evidence 为空，但证据摘要里 s04 命中 aiside/dispatch.py:1/15/26/30/71，产品意图 facts 也明确写有「dispatch.py 说明中『loop + hooks + 权限 + 重试』」，说明存在循环线索。按复核标准第 2 条，应改判「薄弱」并补充 dispatch.py 的具体行证据；改造为：需人工确认该 loop 是否属于 Agent 循环（模型决策 + 工具调用），还是确定性管线调度。",
+        "severity": "high"
+      },
+      {
+        "component": "s08",
+        "problem": "理由中「单 SKU 默认 4 张草稿 × 5 平台 × 多 SKU」「FR5」在输入里没有出处，属于未溯源的数字与编号。产品意图描述的核心闭环是 pipeline.py 确定性顺序跑通、以 job 为单位、过程状态写入 job journal，没有证据表明单次运行会累积需要压缩的长上下文（没有 LLM 对话历史线索）。因此判为 P0 缺少意图依据，建议改为「待确认」或「可选」，不能判为 P0。",
+        "severity": "high"
+      },
+      {
+        "component": "s09",
+        "problem": "判为「缺失」与证据不符：证据摘要 s12 命中 aiside/workspace.py:17/39/45/123/148（资产库、项目图），s11 命中 core/job_journal.py 与 workspace.py，说明已有跨运行的状态持久化线索，应改判「薄弱」。另外理由中的「归档复用」「撤销历史」「FR5」在输入中找不到出处；其中「撤销历史」输入未提及，「归档复用」是把资产库当成记忆的引申，需标注待确认。",
+        "severity": "high"
+      },
+      {
+        "component": "s10",
+        "problem": "理由中「FR5」「崩溃续跑」「每 N 步 checkpoint」「任务恢复率目标 100%」均无出处，指标数值是编造的。同时证据摘要 s11 命中 aiside/core/job_journal.py:14/23/55、workspace.py:122/128，属于任务状态持久化线索，因此「缺失」应改判「薄弱」。P0 的依据需要按产品意图重新论证：意图只写了「进度写项目图与 job journal」，没有给恢复率目标。",
+        "severity": "high"
+      },
+      {
+        "component": "s14",
+        "problem": "理由引用的 FR11、FR13 在输入中不存在。更重要的是，这与产品意图的边界冲突：意图明确「默认不出网，网络出口白名单只放行 DEMO_BASE_URL」「无云端兜底，正式版只接本地推理」。MCP 外部插件对接缺乏意图依据，不应判为 P0，建议降为「可选」或「待确认」，并说明本地 provider 抽象（stub/seedream）不构成 MCP 需求。",
+        "severity": "high"
+      },
+      {
+        "component": "s15",
+        "problem": "理由称「第一版已选 8 个可选组件（s03, s04, s05, s08, s09, s10, s11, s14）」，与差距表不一致：差距表里被列为差距的只有 s08、s09、s10、s14（缺失）和 s02（薄弱），s03/s04/s05/s11 并未作为差距列出。集成结论需按实际差距表重算；另外 s15 自身 evidence 为空，应说明「未扫描到任何线索」的具体扫描范围。",
+        "severity": "medium"
+      },
+      {
+        "component": "s02",
+        "problem": "结论「薄弱」方向可以接受，但证据只有一条 aiside/pipeline.py:43 的函数签名，不足以支撑工具系统的判断。证据摘要中 s03（aiside/api.py 的 /tools/{tool} 路由）与 s04（dispatch.py 的权限与 hooks）都属工具系统线索，应补入证据表。另外优先级 P1 与「工具系统是恒选基础」以及产品意图列出的 8 个领域工具不符，宜上调为 P0。",
+        "severity": "medium"
+      }
+    ],
+    "summary": "多条结论与证据摘要或产品意图不一致：s01/s09/s10 的证据表外已有命中线索（dispatch.py 循环、workspace.py 项目图与资产库、core/job_journal.py），仍被写成「缺失」，应改判「薄弱」；s08/s14 的理由引用了输入中不存在的 FR 编号与量化指标，且 s14 与「默认不出网、无云端兜底」的边界相冲突，不应判 P0。s15 的理由引用的组件清单与差距表自相矛盾，s02 证据过少且优先级偏低，都需要修正后再交付。"
+  },
+  "inventory": {
+    "file_count": 59,
+    "ext_counts": {
+      ".example": 1,
+      ".md": 1,
+      ".txt": 1,
+      ".py": 50,
+      ".yaml": 5,
+      ".sh": 1
+    },
+    "dependencies": [
+      "Pillow",
+      "PyYAML",
+      "fastapi",
+      "httpx",
+      "pydantic",
+      "pytest",
+      "python-dotenv",
+      "uvicorn[standard]"
+    ],
+    "llm_sdks": {},
+    "config_files": [
+      ".env.example"
+    ],
+    "entry_points": [
+      "aiside/__main__.py",
+      "aiside/cli.py",
+      "aiside/main.py",
+      "aiside/pipeline.py"
+    ],
+    "components": {
+      "s01": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s02": {
+        "strength": "weak",
+        "code_files": 1,
+        "sample": [
+          "aiside/pipeline.py:43"
+        ]
+      },
+      "s03": {
+        "strength": "strong",
+        "code_files": 15,
+        "sample": [
+          "aiside/api.py:7",
+          "aiside/api.py:49",
+          "aiside/api.py:50"
+        ]
+      },
+      "s04": {
+        "strength": "strong",
+        "code_files": 4,
+        "sample": [
+          "aiside/dispatch.py:1",
+          "aiside/dispatch.py:15",
+          "aiside/dispatch.py:26"
+        ]
+      },
+      "s05": {
+        "strength": "strong",
+        "code_files": 2,
+        "sample": [
+          "aiside/pipeline.py:55",
+          "aiside/pipeline.py:58",
+          "aiside/pipeline.py:59"
+        ]
+      },
+      "s06": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s07": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s08": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s09": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s10": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s11": {
+        "strength": "strong",
+        "code_files": 4,
+        "sample": [
+          "aiside/workspace.py:122",
+          "aiside/workspace.py:128",
+          "aiside/core/job_journal.py:14"
+        ]
+      },
+      "s12": {
+        "strength": "strong",
+        "code_files": 2,
+        "sample": [
+          "aiside/workspace.py:17",
+          "aiside/workspace.py:39",
+          "aiside/workspace.py:45"
+        ]
+      },
+      "s13": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s14": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s15": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      },
+      "s16": {
+        "strength": "strong",
+        "code_files": 7,
+        "sample": [
+          "aiside/workspace.py:15",
+          "aiside/workspace.py:77",
+          "aiside/workspace.py:79"
+        ]
+      },
+      "s17": {
+        "strength": "none",
+        "code_files": 0,
+        "sample": []
+      }
+    },
+    "acceptance": {
+      "runnable": {
+        "name": "可运行",
+        "status": "pass",
+        "evidence": [
+          "aiside/__main__.py",
+          "aiside/cli.py",
+          "aiside/main.py",
+          ".env.example"
+        ]
+      },
+      "fault_tolerant": {
+        "name": "可容错",
+        "status": "pass",
+        "evidence": [
+          "aiside/api.py:68",
+          "aiside/dispatch.py:101",
+          "aiside/pipeline.py:33",
+          "aiside/core/scheduler.py:109",
+          "aiside/providers/seedream.py:57",
+          "aiside/tools/generate.py:115"
+        ]
+      },
+      "observable": {
+        "name": "可观测",
+        "status": "pass",
+        "evidence": [
+          "aiside/api.py:29",
+          "aiside/dispatch.py:9",
+          "aiside/logging_config.py:8",
+          "aiside/main.py:8",
+          "aiside/pipeline.py:126",
+          "aiside/workspace.py:5"
+        ]
+      },
+      "testable": {
+        "name": "可测试",
+        "status": "pass",
+        "evidence": [
+          "tests/conftest.py",
+          "tests/test_asset_store.py",
+          "tests/test_permissions.py",
+          "tests/test_pipeline.py",
+          "tests/test_project_graph.py",
+          "tests/test_providers.py"
+        ]
+      },
+      "deployable": {
+        "name": "可部署",
+        "status": "partial",
+        "evidence": []
+      },
+      "measurable": {
+        "name": "可度量",
+        "status": "pass",
+        "evidence": [
+          "aiside/dispatch.py:82",
+          "aiside/observability/__init__.py:1",
+          "aiside/observability/metrics.py:1"
+        ]
+      }
+    }
+  },
+  "runner": "anthropic",
+  "budget": {
+    "calls": 3,
+    "input_tokens": 7723,
+    "output_tokens": 13353,
+    "max_calls": 16,
+    "max_tokens": 400000
+  }
+}

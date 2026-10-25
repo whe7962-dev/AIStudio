@@ -1,0 +1,22 @@
+[
+  {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "tab": "imageTab"
+  },
+  {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "tab": "videoTab"
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "tab": "imageTab"
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "tab": "videoTab"
+  }
+]

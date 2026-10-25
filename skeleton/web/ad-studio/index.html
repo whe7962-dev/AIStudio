@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>商品广告 · 创作画布</title><link rel="stylesheet" href="style.css?v=ad-upload-1"></head>
+<body class="production-ad">
+<div class="app">
+ <aside class="assets">
+  <div class="aside-title">共用商品参考 <span>全片沿用</span></div>
+  <button type="button" id="product-preview" class="asset-image empty-asset" aria-label="上传商品参考图"><span class="upload-symbol" aria-hidden="true">＋</span><strong>上传商品图</strong><small>点击选择图片 · 全片共用</small></button>
+  <label class="product-name-label" for="product-name">商品名称</label><input id="product-name" maxlength="120" placeholder="例如：黑色通勤背包">
+  <div class="asset-buttons"><button id="upload-product">上传商品图</button><button id="shared-product" class="quiet">从素材库选</button></div><input id="product-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+  <p class="muted">同一份商品参考用于每个场景。<br>JPG / PNG / WebP，最大 10MB。</p>
+  <div class="divider"></div><div class="aside-title small">固定外观 <span>▣</span></div><ul class="rules"><li>商品轮廓、颜色与结构</li><li>包装、Logo 和可见细节</li><li>不添加未确认的功效</li></ul>
+  <details><summary>人物参考 <span>可选</span></summary><div id="person-preview"></div><button id="upload-person" class="quiet">上传固定人物参考</button><button id="remove-person" class="quiet" hidden>移除</button><input id="person-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></details>
+  <p class="asset-foot" id="service-status">正在检查服务…</p><button id="ad-history" class="quiet">历史方案与成片</button><a class="legacy-link" href="/legacy-video.html" target="_blank" rel="noopener">查看旧版视频记录 ↗</a>
+ </aside>
+ <main>
+  <div class="canvas-top"><div><h1>让一个想法，长成一支广告。</h1><p id="status">上传商品，写下广告想法，再确认场景。</p></div><div class="canvas-actions"><button id="edit-plan" class="quiet" hidden>编辑场景</button><button id="video-settings">视频设置与规则</button><button id="overview" class="quiet">⌖ 全览</button></div></div>
+  <section id="viewport" aria-label="广告创作画布"><div class="canvas-hint">拖动画面整理位置 · 拖动空白平移</div><div id="world"><svg id="wires" aria-hidden="true"></svg><div id="nodes"></div></div><div class="zoom"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-label">100%</span><button id="zoom-in" aria-label="放大">+</button></div><div id="selection-tools" hidden></div></section>
+  <section class="composer-wrap"><div class="review-bar"><span id="review-status"></span><button id="review" class="primary"></button></div><div class="composer"><div class="composer-context"><span id="context">整个广告</span><button id="clear-selection" hidden aria-label="取消画面选择">×</button><span class="context-note">商品和已确认的要求会自动沿用</span></div><div class="input-row"><button type="button" id="composer-upload" class="composer-upload" aria-label="添加商品图"><span aria-hidden="true">＋</span><span>添加商品图</span></button><textarea id="intent" aria-label="广告需求或修改意见" rows="2" placeholder="描述你的广告想法，或选中一张画面说说想怎么改…"></textarea><button id="send" class="send" aria-label="提交想法">↑</button></div><div class="intent-settings" role="group" aria-label="创作意图的视频规格"><label>尺寸<select id="quick-ratio"><option value="16:9">16:9 横屏</option><option value="9:16">9:16 竖屏</option><option value="1:1">1:1 方形</option></select></label><label>分辨率<select id="quick-resolution"><option value="480P">480P</option><option value="720P">720P</option><option value="1080P">1080P</option></select></label><div id="quick-duration"></div><span>提交前选好，全片沿用</span></div><div class="composer-meta"><span>横屏 16:9 · 3 个场景 · 示例素材</span><span>关键帧确认后，才进入视频</span></div></div></section>
+ </main>
+</div>
+<div id="toast" role="status" hidden></div>
+<dialog id="dialog"><div class="dialog-head"><div><span class="eyebrow" id="dialog-label">画面预览</span><h2 id="dialog-title"></h2></div><button id="close-dialog" class="quiet" aria-label="关闭">×</button></div><div id="dialog-body"></div><div id="dialog-actions"></div></dialog>
+<script src="duration.js?v=ad-upload-1"></script>
+<script src="app.js?v=ad-upload-1"></script>
+</body></html>

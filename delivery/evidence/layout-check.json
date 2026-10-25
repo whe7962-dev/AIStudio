@@ -1,0 +1,26 @@
+[
+  {
+    "width": 1280,
+    "tab": "imageTab",
+    "scroll": 1265,
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "tab": "videoTab",
+    "scroll": 1265,
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "tab": "imageTab",
+    "scroll": 1425,
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "tab": "videoTab",
+    "scroll": 1425,
+    "overflow": false
+  }
+]

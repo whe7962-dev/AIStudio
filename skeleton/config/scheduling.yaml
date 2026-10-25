@@ -1,0 +1,20 @@
+# 调度与降级参数（可编辑配置）。骨架默认值，正式阈值待实测。
+scheduling:
+  lane: 1                    # 单执行道
+  priority:
+    interactive: 0           # 交互任务插队
+    draft: 10
+    final: 20
+    batch: 30
+    export: 40
+  checkpoint_every_n_steps: 4
+  autosave_debounce_seconds: 2
+  job_retry_count: 1         # 失败自动重试 1 次
+degradation:
+  # OOM / 超时降级链：降分辨率 → 降步数 → 换轻量模型；每级都在界面与 job 记录中标 degraded。
+  chain:
+    - reduce_resolution
+    - reduce_steps
+    - switch_lighter_model
+  draft_timeout_seconds: 10  # 草稿首图目标 p95（非单次判定阈值，见方案审稿意见）
+  final_timeout_seconds: 120 # 终稿单图目标 p95（待实测）

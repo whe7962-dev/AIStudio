@@ -1,0 +1,861 @@
+{
+  "root": "/Users/Admin/Documents/deepseek-harness/default-workspace/ai-studio-test/最终PRD/端侧AIStudio/skeleton",
+  "readme": "# 端侧AIStudio 后端骨架（skeleton/）\n\n> 按 `../方案.md` 生成的可独立运行后端骨架。正式产品为原生 macOS 桌面画布应用\n> （Swift/SwiftUI）作为前端，本包作为「本地推理与图像处理管线」Python 后端，\n> 通过本地 HTTP 接口通信。骨架阶段以 FastAPI 服务承载后端能力。\n\n## 运行\n\n```bash\ncd out/端侧AIStudio/skeleton\npython3 -m venv .venv\n.venv/bin/pip install -r requirements.txt\n\n# 离线跑通电商闭环（stub provider，无需任何密钥）\n.venv/bin/python -m aiside demo\n\n# 启动本地 HTTP 服务（默认 127.0.0.1:8765）\n.venv/bin/python -m aiside serve\n```\n\n一条命令版（自动建 venv、装依赖、加载 demo-api.env）：\n\n```bash\n./scripts/dev.sh demo      # 离线闭环\n./scripts/dev.sh serve     # HTTP 服务\n```\n\n## demo 期生图（豆包 Seedream）\n\n- 真实 key 在 `out/端侧AIStudio/demo-api.env`（本目录的上一级 `../demo-api.env`），\n  **不入库、不进 git、不进日志、不进 PRD、不写进代码**。\n- `scripts/dev.sh` 启动时自动 `source ../demo-api.env`；也可手动 `export` 环境变量。\n- 未提供 key 时自动回退 `stub` 离线 provider，全链路仍可跑通。\n- 网络出口白名单默认只放行 `DEMO_BASE_URL` 域名，其余出网请求一律拒绝（默认不出网红线）。\n- 正式版切本地推理（Apple MLX/Core ML），Seedream provider 仅为原型验证链路。\n\n## 目录结构\n\n```\nskeleton/\n├── aiside/                 # 后端包\n│   ├── main.py             # FastAPI 入口\n│   ├── api.py              # REST 路由\n│   ├── workspace.py        # 聚合：项目/调度/权限/观测\n│   ├── dispatch.py         # 工具分发（loop + hooks + 权限 + 重试）\n│   ├── pipeline.py         # 确定性电商闭环 demo\n│   ├── prompt.py           # 系统提示词草案\n│   ├── core/               # 项目图(DAG)、资产库、journal、调度、审计\n│   ├── tools/              # 8 个领域工具\n│   ├── providers/          # stub / seedream 双 provider\n│   ├── permissions/        # 默认拒绝 + ask 确认\n│   ├── hooks/              # Pre/PostToolUse + 网络出口审计\n│   └── observability/      # 指标\n├── config/                 # 渠道规格/质检阈值/命名/模型注册表/调度降级（可编辑）\n├── tests/                  # 核心循环、权限边界、降级链、provider 单测\n├── scripts/dev.sh          # 一条命令启动\n├── requirements.txt\n├── .env.example\n└── .gitignore\n```\n\n## 组件选型映射（对应 方案.md Step 3）\n\n| 引擎组件 | 骨架落地 |\n|---|---|\n| s01 Agent Loop | `dispatch.py`（确定性分派；真实 LLM 循环接入后替换 driver） |\n| s02 工具系统 | `tools/registry.py` + 8 个工具 |\n| s03 权限系统 | `permissions/policy.py`（默认拒绝上传、ask 确认、审计） |\n| s04 钩子系统 | `hooks/manager.py`（Pre/PostToolUse + 网络出口审计） |\n| s05 任务规划 | `plan.py` TodoList + `pipeline.py` 确定性计划 |\n| s10 任务系统 | `core/project_graph.py` + `core/job_journal.py`（checkpoint/续跑） |\n| s11 后台任务 | `core/scheduler.py`（单执行道 + 优先级队列 + step 边界抢占） |\n| s15 集成 Harness | `workspace.py` + `dispatch.py` 归一到单一循环 |\n\n## 8 个领域工具\n\n`ingest_and_qa_photos`、`build_consistency_anchor`、`generate_image`、\n`score_fidelity_and_batch_qa`、`postprocess_and_package`、`project_graph_edit`、\n`asset_store`、`model_manager`。完整 schema 见 `GET /tools`。\n\n## 红线落地\n\n1. **默认不出网**：网络出口白名单，仅放行 demo 生图 API 域名；其余 deny + 审计。\n2. **无云端兜底**：provider 抽象，正式版只写本地推理；demo 走 Seedream 仅原型。\n3. **不静默失败**：生成失败自动重试 1 次，仍失败按降级链（降分辨率→降步数→换轻量模型）\n   逐级尝试并标 `degraded`；导出/破坏性操作需确认，未确认不落盘。\n\n## ⚠️ 按默认假设实现（待确认项，见 方案.md）\n\n- **前后端通信**：假设为「本地 HTTP（子进程起 FastAPI 服务）」，进程边界方案待确认。\n- **渠道规格**：`config/channels.yaml` 为示例尺寸，正式规格待平台规范回填。\n- **质检/一致性阈值**：`config/qa_thresholds.yaml` 为占位值，真实模型接入后实测。\n- **本地模型推理**：骨架用 `StubProvider` 占位；FLUX/Qwen-Image 的 MLX/Core ML 接入待硬化。\n- **模型下载/热切换**：`model_manager` 仅实现注册表查询与校验占位，真实下载待硬化。\n\n## 测试\n\n```bash\n.venv/bin/python -m pytest -q\n```\n\n覆盖：项目图增量重算、资产去重、调度优先级/取消、权限边界（网络 deny、导出 ask、\n破坏性 ask、审计留痕）、工具链路、provider stub/seedream 解析、电商闭环端到端。\n\n## API 速览\n\n| 方法 | 路径 | 说明 |\n|---|---|---|\n| GET | `/health` | 健康检查 + 当前 provider |\n| GET | `/tools` | 工具清单（schema/权限/副作用） |\n| GET | `/metrics` | 指标快照（对齐 PRD 成功指标） |\n| POST | `/projects` | 新建项目 |\n| GET | `/projects/{pid}` | 项目图（DAG） |\n| POST | `/projects/{pid}/jobs` | 提交异步任务（走队列） |\n| POST | `/projects/{pid}/tools/{tool}` | 同步调用工具 |\n| GET | `/projects/{pid}/jobs/{jid}` | 任务状态 |\n| POST | `/jobs/{jid}/confirm` | 用户确认（ask 类操作） |\n| GET | `/projects/{pid}/assets/{cid}` | 取资产字节 |\n",
+  "tree": "aiside/\n    core/\n        __init__.py\n        asset_store.py\n        audit.py\n        context.py\n        ids.py\n        job_journal.py\n        project_graph.py\n        scheduler.py\n    hooks/\n        __init__.py\n        manager.py\n    observability/\n        __init__.py\n        metrics.py\n    permissions/\n        __init__.py\n        policy.py\n    providers/\n        __init__.py\n        base.py\n        seedream.py\n        stub.py\n    tools/\n        __init__.py\n        anchor.py\n        asset_tool.py\n        generate.py\n        graph_edit.py\n        ingest.py\n        model_manager.py\n        postprocess.py\n        registry.py\n        score.py\n    __init__.py\n    __main__.py\n    api.py\n    cli.py\n    dispatch.py\n    errors.py\n    logging_config.py\n    main.py\n    pipeline.py\n    plan.py\n    prompt.py\n    schemas.py\n    settings.py\n    workspace.py\nconfig/\n    channels.yaml\n    model_registry.yaml\n    naming_rules.yaml\n    qa_thresholds.yaml\n    scheduling.yaml\nscripts/\n    dev.sh\ntests/\n    conftest.py\n    test_asset_store.py\n    test_permissions.py\n    test_pipeline.py\n    test_project_graph.py\n    test_providers.py\n    test_scheduler.py\n    test_tools.py\n.env.example\nREADME.md\nrequirements.txt",
+  "file_count": 59,
+  "ext_counts": {
+    ".example": 1,
+    ".md": 1,
+    ".txt": 1,
+    ".py": 50,
+    ".yaml": 5,
+    ".sh": 1
+  },
+  "dependencies": [
+    "Pillow",
+    "PyYAML",
+    "fastapi",
+    "httpx",
+    "pydantic",
+    "pytest",
+    "python-dotenv",
+    "uvicorn[standard]"
+  ],
+  "llm_sdks": {},
+  "components": {
+    "s01": {
+      "id": "s01",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s02": {
+      "id": "s02",
+      "strength": "weak",
+      "code_files": 1,
+      "doc_files": 0,
+      "hits": [
+        {
+          "file": "aiside/pipeline.py",
+          "line": 43,
+          "pattern": "def run_\\w+\\(",
+          "text": "def run_ecommerce_demo(settings: Settings | None = None, workspace: Workspace | None = None,"
+        }
+      ]
+    },
+    "s03": {
+      "id": "s03",
+      "strength": "strong",
+      "code_files": 15,
+      "doc_files": 2,
+      "hits": [
+        {
+          "file": "aiside/api.py",
+          "line": 7,
+          "pattern": "permission",
+          "text": "from .errors import ConfirmationRequired, PermissionDenied, ToolExecutionError"
+        },
+        {
+          "file": "aiside/api.py",
+          "line": 49,
+          "pattern": "permission",
+          "text": "decision = ws.check_permission(project_id, body.tool, body.params)"
+        },
+        {
+          "file": "aiside/api.py",
+          "line": 50,
+          "pattern": "deny",
+          "text": "if decision.action == \"deny\":"
+        },
+        {
+          "file": "aiside/api.py",
+          "line": 66,
+          "pattern": "permission",
+          "text": "except PermissionDenied as exc:"
+        },
+        {
+          "file": "aiside/api.py",
+          "line": 82,
+          "pattern": "permission",
+          "text": "except PermissionDenied as exc:"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 14,
+          "pattern": "permission",
+          "text": "from .errors import ConfirmationRequired, PermissionDenied, ToolExecutionError"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 17,
+          "pattern": "permission",
+          "text": "from .permissions.policy import ActionContext, ASK, DENY, PermissionPolicy"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 26,
+          "pattern": "permission",
+          "text": "def __init__(self, settings, policy: PermissionPolicy, hooks: HookManager,"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 35,
+          "pattern": "deny",
+          "text": "\"\"\"只做权限评估（不执行），供 API 先判断 allow / ask / deny。\"\"\""
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 43,
+          "pattern": "permission",
+          "text": "permission = tool.permission"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 46,
+          "pattern": "permission",
+          "text": "permission = ASK"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 49,
+          "pattern": "permission",
+          "text": "permission=permission, destructive=destructive,"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 58,
+          "pattern": "deny",
+          "text": "if decision.action == DENY:"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 59,
+          "pattern": "permission",
+          "text": "raise PermissionDenied(decision.reason)"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 73,
+          "pattern": "permission",
+          "text": "raise PermissionDenied(f\"PreToolUse 阻断: {block_reason}\")"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 97,
+          "pattern": "permission",
+          "text": "except (PermissionError, ConfirmationRequired, PermissionDenied):"
+        },
+        {
+          "file": "aiside/errors.py",
+          "line": 8,
+          "pattern": "permission",
+          "text": "class PermissionDenied(AISideError):"
+        },
+        {
+          "file": "aiside/settings.py",
+          "line": 47,
+          "pattern": "allow.?list",
+          "text": "network_allowlist: list[str] = field(default_factory=list)"
+        },
+        {
+          "file": "aiside/settings.py",
+          "line": 60,
+          "pattern": "allow.?list",
+          "text": "for item in (d.lower() for d in self.network_allowlist)"
+        },
+        {
+          "file": "aiside/settings.py",
+          "line": 86,
+          "pattern": "allow.?list",
+          "text": "allowlist = ["
+        }
+      ]
+    },
+    "s04": {
+      "id": "s04",
+      "strength": "strong",
+      "code_files": 4,
+      "doc_files": 1,
+      "hits": [
+        {
+          "file": "aiside/dispatch.py",
+          "line": 1,
+          "pattern": "\\bhooks?\\b",
+          "text": "\"\"\"工具分发器：loop + 工具分派 + hooks + 权限 + 重试 + 观测。"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 15,
+          "pattern": "\\bhooks?\\b",
+          "text": "from .hooks.manager import HookContext, HookManager"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 26,
+          "pattern": "\\bhooks?\\b",
+          "text": "def __init__(self, settings, policy: PermissionPolicy, hooks: HookManager,"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 30,
+          "pattern": "\\bhooks?\\b",
+          "text": "self.hooks = hooks"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 71,
+          "pattern": "\\bhooks?\\b",
+          "text": "block_reason = self.hooks.trigger_pre(hook_ctx)"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 73,
+          "pattern": "PreToolUse",
+          "text": "raise PermissionDenied(f\"PreToolUse 阻断: {block_reason}\")"
+        },
+        {
+          "file": "aiside/dispatch.py",
+          "line": 86,
+          "pattern": "\\bhooks?\\b",
+          "text": "self.hooks.trigger_post(hook_ctx)"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 20,
+          "pattern": "\\bhooks?\\b",
+          "text": "from .hooks.manager import HookManager"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 36,
+          "pattern": "\\bhooks?\\b",
+          "text": "self.hooks = HookManager(self.audit)"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 38,
+          "pattern": "\\bhooks?\\b",
+          "text": "self.dispatcher = Dispatcher(settings, self.policy, self.hooks, self.metrics)"
+        },
+        {
+          "file": "aiside/hooks/__init__.py",
+          "line": 1,
+          "pattern": "PreToolUse",
+          "text": "\"\"\"钩子系统：PreToolUse / PostToolUse / Stop 扩展点（不侵入主循环）。\"\"\""
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 1,
+          "pattern": "\\bhooks?\\b",
+          "text": "\"\"\"Hook 管理器（对应 s04）：工具执行前后扩展点 + 网络出口审计。"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 3,
+          "pattern": "PreToolUse",
+          "text": "- PreToolUse 可返回阻断原因（block_reason），阻断后该工具不执行。"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 4,
+          "pattern": "PostToolUse",
+          "text": "- PostToolUse 观察结果，异常不影响主循环。"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 16,
+          "pattern": "\\bhooks?\\b",
+          "text": "logger = logging.getLogger(\"aiside.hooks\")"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 43,
+          "pattern": "\\bhooks?\\b",
+          "text": "def register_pre(self, hook: PreHook) -> None:"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 44,
+          "pattern": "\\bhooks?\\b",
+          "text": "self._pre.append(hook)"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 46,
+          "pattern": "\\bhooks?\\b",
+          "text": "def register_post(self, hook: PostHook) -> None:"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 47,
+          "pattern": "\\bhooks?\\b",
+          "text": "self._post.append(hook)"
+        },
+        {
+          "file": "aiside/hooks/manager.py",
+          "line": 50,
+          "pattern": "\\bhooks?\\b",
+          "text": "for hook in self._pre:"
+        }
+      ]
+    },
+    "s05": {
+      "id": "s05",
+      "strength": "strong",
+      "code_files": 2,
+      "doc_files": 1,
+      "hits": [
+        {
+          "file": "aiside/pipeline.py",
+          "line": 55,
+          "pattern": "\\btodos?\\b",
+          "text": "todo = TodoList()"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 58,
+          "pattern": "\\btodos?\\b",
+          "text": "t_ingest = todo.add(\"ingest_and_qa_photos\")"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 59,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.start(t_ingest.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 65,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.done(t_ingest.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 68,
+          "pattern": "\\btodos?\\b",
+          "text": "t_anchor = todo.add(\"build_consistency_anchor\")"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 69,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.start(t_anchor.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 77,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.done(t_anchor.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 80,
+          "pattern": "\\btodos?\\b",
+          "text": "t_gen = todo.add(\"generate_image\")"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 81,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.start(t_gen.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 94,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.done(t_gen.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 97,
+          "pattern": "\\btodos?\\b",
+          "text": "t_score = todo.add(\"score_fidelity_and_batch_qa\")"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 98,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.start(t_score.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 105,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.done(t_score.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 108,
+          "pattern": "\\btodos?\\b",
+          "text": "t_export = todo.add(\"postprocess_and_package\")"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 109,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.start(t_export.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 117,
+          "pattern": "\\btodos?\\b",
+          "text": "todo.done(t_export.id)"
+        },
+        {
+          "file": "aiside/pipeline.py",
+          "line": 125,
+          "pattern": "\\btodos?\\b",
+          "text": "\"todo\": todo.summary(),"
+        },
+        {
+          "file": "aiside/plan.py",
+          "line": 1,
+          "pattern": "\\btodos?\\b",
+          "text": "\"\"\"任务规划（对应 s05）：轻量 todo 计划 + 确定性执行。"
+        },
+        {
+          "file": "aiside/plan.py",
+          "line": 3,
+          "pattern": "\\btodos?\\b",
+          "text": "真实 LLM 循环接入后，todo 由模型维护；骨架阶段由确定性流水线（pipeline.py）驱动，"
+        }
+      ]
+    },
+    "s06": {
+      "id": "s06",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s07": {
+      "id": "s07",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s08": {
+      "id": "s08",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s09": {
+      "id": "s09",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s10": {
+      "id": "s10",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s11": {
+      "id": "s11",
+      "strength": "strong",
+      "code_files": 4,
+      "doc_files": 0,
+      "hits": [
+        {
+          "file": "aiside/workspace.py",
+          "line": 122,
+          "pattern": "queue",
+          "text": "ctx.journal.record(job_id, tool_name, params, project_id=project_id, status=\"queued\")"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 128,
+          "pattern": "queue",
+          "text": "return {\"job_id\": job_id, \"status\": \"queued\"}"
+        },
+        {
+          "file": "aiside/core/job_journal.py",
+          "line": 14,
+          "pattern": "queue",
+          "text": "QUEUED = \"queued\""
+        },
+        {
+          "file": "aiside/core/job_journal.py",
+          "line": 23,
+          "pattern": "queue",
+          "text": "_INCOMPLETE = {QUEUED, RUNNING, CHECKPOINT, AWAITING_CONFIRMATION}"
+        },
+        {
+          "file": "aiside/core/job_journal.py",
+          "line": 55,
+          "pattern": "queue",
+          "text": "project_id: str | None = None, status: str = QUEUED) -> None:"
+        },
+        {
+          "file": "aiside/core/project_graph.py",
+          "line": 150,
+          "pattern": "queue",
+          "text": "queue = [nid for nid, d in indeg.items() if d == 0]"
+        },
+        {
+          "file": "aiside/core/project_graph.py",
+          "line": 152,
+          "pattern": "queue",
+          "text": "while queue:"
+        },
+        {
+          "file": "aiside/core/project_graph.py",
+          "line": 153,
+          "pattern": "queue",
+          "text": "cur = queue.pop(0)"
+        },
+        {
+          "file": "aiside/core/project_graph.py",
+          "line": 158,
+          "pattern": "queue",
+          "text": "queue.append(child)"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 57,
+          "pattern": "queue",
+          "text": "class _QueueItem:"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 68,
+          "pattern": "queue",
+          "text": "self._heap: list[_QueueItem] = []"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 72,
+          "pattern": "threading\\.Thread",
+          "text": "self._worker: threading.Thread | None = None"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 81,
+          "pattern": "queue",
+          "text": "item = _QueueItem(priority=prio, seq=next(self._seq), job_id=job_id,"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 85,
+          "pattern": "queue",
+          "text": "self._statuses[job_id] = \"queued\""
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 86,
+          "pattern": "queue",
+          "text": "logger.info(\"job queued job_id=%s priority=%s\", job_id, prio)"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 103,
+          "pattern": "threading\\.Thread",
+          "text": "self._worker = threading.Thread(target=self._run, name=\"aiside-scheduler\", daemon=True)"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 125,
+          "pattern": "queue",
+          "text": "def _execute(self, item: _QueueItem) -> None:"
+        }
+      ]
+    },
+    "s12": {
+      "id": "s12",
+      "strength": "strong",
+      "code_files": 2,
+      "doc_files": 2,
+      "hits": [
+        {
+          "file": "aiside/workspace.py",
+          "line": 17,
+          "pattern": "schedule",
+          "text": "from .core.scheduler import Scheduler"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 39,
+          "pattern": "schedule",
+          "text": "self.scheduler = Scheduler()"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 45,
+          "pattern": "schedule",
+          "text": "self.scheduler.start()"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 123,
+          "pattern": "schedule",
+          "text": "self.scheduler.submit("
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 148,
+          "pattern": "schedule",
+          "text": "except Exception as exc:  # noqa: BLE001 - scheduler 会标记 failed"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 165,
+          "pattern": "schedule",
+          "text": "self.scheduler.stop()"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 21,
+          "pattern": "schedule",
+          "text": "logger = logging.getLogger(\"aiside.scheduler\")"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 65,
+          "pattern": "schedule",
+          "text": "class Scheduler:"
+        },
+        {
+          "file": "aiside/core/scheduler.py",
+          "line": 103,
+          "pattern": "schedule",
+          "text": "self._worker = threading.Thread(target=self._run, name=\"aiside-scheduler\", daemon=True)"
+        }
+      ]
+    },
+    "s13": {
+      "id": "s13",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s14": {
+      "id": "s14",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    },
+    "s15": {
+      "id": "s15",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 1,
+      "hits": []
+    },
+    "s16": {
+      "id": "s16",
+      "strength": "strong",
+      "code_files": 7,
+      "doc_files": 2,
+      "hits": [
+        {
+          "file": "aiside/workspace.py",
+          "line": 15,
+          "pattern": "journal",
+          "text": "from .core.job_journal import AWAITING_CONFIRMATION, JobJournal"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 77,
+          "pattern": "journal",
+          "text": "journal = JobJournal(project_dir / \"journal.sqlite3\")"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 79,
+          "pattern": "journal",
+          "text": "project=graph, assets=assets, journal=journal,"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 94,
+          "pattern": "journal",
+          "text": "journal=JobJournal(project_dir / \"journal.sqlite3\"),"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 117,
+          "pattern": "journal",
+          "text": "ctx.journal.record(job_id, tool_name, params, status=AWAITING_CONFIRMATION,"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 122,
+          "pattern": "journal",
+          "text": "ctx.journal.record(job_id, tool_name, params, project_id=project_id, status=\"queued\")"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 139,
+          "pattern": "journal",
+          "text": "ctx.journal.update(job_id, \"running\")"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 143,
+          "pattern": "journal",
+          "text": "ctx.journal.update(job_id, \"completed\")"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 146,
+          "pattern": "journal",
+          "text": "ctx.journal.update(job_id, AWAITING_CONFIRMATION, error=exc.reason)"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 149,
+          "pattern": "journal",
+          "text": "ctx.journal.update(job_id, \"failed\", error=str(exc))"
+        },
+        {
+          "file": "aiside/workspace.py",
+          "line": 158,
+          "pattern": "journal",
+          "text": "record = ctx.journal.get(job_id)"
+        },
+        {
+          "file": "aiside/core/__init__.py",
+          "line": 1,
+          "pattern": "journal",
+          "text": "\"\"\"核心领域：项目图（DAG）、内容寻址资产库、job journal、任务调度。\"\"\""
+        },
+        {
+          "file": "aiside/core/context.py",
+          "line": 1,
+          "pattern": "journal",
+          "text": "\"\"\"工具运行上下文：把项目图、资产库、journal、provider、配置聚合给工具处理器。\"\"\""
+        },
+        {
+          "file": "aiside/core/context.py",
+          "line": 10,
+          "pattern": "journal",
+          "text": "from .job_journal import JobJournal"
+        },
+        {
+          "file": "aiside/core/context.py",
+          "line": 18,
+          "pattern": "journal",
+          "text": "journal: JobJournal"
+        },
+        {
+          "file": "aiside/core/job_journal.py",
+          "line": 1,
+          "pattern": "journal",
+          "text": "\"\"\"Job journal（SQLite WAL）：记录任务输入、图哈希、参数、checkpoint，支持崩溃续跑。"
+        },
+        {
+          "file": "aiside/core/job_journal.py",
+          "line": 3,
+          "pattern": "journal",
+          "text": "不把 job journal 暴露为模型可调用工具（见方案：由任务系统内部实现）。"
+        },
+        {
+          "file": "aiside/core/job_journal.py",
+          "line": 26,
+          "pattern": "journal",
+          "text": "class JobJournal:"
+        },
+        {
+          "file": "aiside/core/job_journal.py",
+          "line": 32,
+          "pattern": "journal",
+          "text": "self._conn.execute(\"PRAGMA journal_mode=WAL\")"
+        },
+        {
+          "file": "aiside/core/project_graph.py",
+          "line": 1,
+          "pattern": "\\bdag\\b",
+          "text": "\"\"\"项目图（DAG）：所有模块读写同一张图，改一个节点只重算下游。"
+        }
+      ]
+    },
+    "s17": {
+      "id": "s17",
+      "strength": "none",
+      "code_files": 0,
+      "doc_files": 0,
+      "hits": []
+    }
+  },
+  "acceptance": {
+    "runnable": {
+      "name": "可运行",
+      "status": "pass",
+      "evidence": [
+        "aiside/__main__.py",
+        "aiside/cli.py",
+        "aiside/main.py",
+        ".env.example"
+      ]
+    },
+    "fault_tolerant": {
+      "name": "可容错",
+      "status": "pass",
+      "evidence": [
+        "aiside/api.py:68",
+        "aiside/dispatch.py:101",
+        "aiside/pipeline.py:33",
+        "aiside/core/scheduler.py:109",
+        "aiside/providers/seedream.py:57",
+        "aiside/tools/generate.py:115"
+      ]
+    },
+    "observable": {
+      "name": "可观测",
+      "status": "pass",
+      "evidence": [
+        "aiside/api.py:29",
+        "aiside/dispatch.py:9",
+        "aiside/logging_config.py:8",
+        "aiside/main.py:8",
+        "aiside/pipeline.py:126",
+        "aiside/workspace.py:5"
+      ]
+    },
+    "testable": {
+      "name": "可测试",
+      "status": "pass",
+      "evidence": [
+        "tests/conftest.py",
+        "tests/test_asset_store.py",
+        "tests/test_permissions.py",
+        "tests/test_pipeline.py",
+        "tests/test_project_graph.py",
+        "tests/test_providers.py"
+      ]
+    },
+    "deployable": {
+      "name": "可部署",
+      "status": "partial",
+      "evidence": []
+    },
+    "measurable": {
+      "name": "可度量",
+      "status": "pass",
+      "evidence": [
+        "aiside/dispatch.py:82",
+        "aiside/observability/__init__.py:1",
+        "aiside/observability/metrics.py:1"
+      ]
+    }
+  },
+  "config_files": [
+    ".env.example"
+  ],
+  "entry_points": [
+    "aiside/__main__.py",
+    "aiside/cli.py",
+    "aiside/main.py",
+    "aiside/pipeline.py"
+  ],
+  "source_digest": "1950b14e1ef17a3197f646e0baa7a36f14c9c3b6f6a3f8454fb2c9f8853498aa"
+}

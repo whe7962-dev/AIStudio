@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "job_id": "9526bf6f09",
+  "status": "success",
+  "provider": "seedream",
+  "model": "doubao-seedream-5-0-flash-260915",
+  "created_at": 1792695826.710088,
+  "params": {
+    "prompt": "商品卖点：保温杯，保持杯体与杯盖的形状和颜色，纯色背景，专业棚拍，柔光，商品居中，光线：自然光，风格：写实，严格保持商品形状、颜色、logo、材质不变，避免：额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+    "scene": "studio",
+    "count": 1,
+    "strength": 0.75,
+    "lock_product": true,
+    "negative_prompt": "额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+    "size": "1024x1024",
+    "sku": "DEMO-CUP",
+    "seed_base": 588233598
+  },
+  "sku": "DEMO-CUP",
+  "prompt": "商品卖点：保温杯，保持杯体与杯盖的形状和颜色，纯色背景，专业棚拍，柔光，商品居中，光线：自然光，风格：写实，严格保持商品形状、颜色、logo、材质不变，避免：额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+  "negative_prompt": "额外文字、水印、新增logo、杂物、多余人物、畸形、低分辨率、过曝",
+  "reference_strength": 0.75,
+  "size": "1024x1024",
+  "next_seed": 588233599,
+  "count": 1,
+  "files": [
+    "DEMO-CUP_studio_1_1024x1024.jpg"
+  ],
+  "images": [
+    {
+      "id": "img_0",
+      "status": "success",
+      "source": "seedream",
+      "strength": 0.75,
+      "seed": 588233598,
+      "created_at": 1792695833.281182,
+      "filename": "DEMO-CUP_studio_1_1024x1024.jpg"
+    }
+  ]
+}

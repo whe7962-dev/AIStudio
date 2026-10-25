@@ -1,0 +1,45 @@
+# 模型注册表（只读配置）。正式版全部本地推理；demo 期生图走豆包 Seedream（仅原型）。
+# 目录位置、下载与校验流程归属 model_manager；此处仅为骨架默认注册表。
+models:
+  draft:
+    - id: sdxl-lightning
+      runtime: mlx
+      quant: fp16
+      steps: 8
+      license: open-rail
+      commercial: true
+      download_url: ""
+      sha256: ""
+    - id: flux-1-schnell
+      runtime: mlx
+      quant: fp8
+      steps: 8
+      license: apache-2.0
+      commercial: true
+      download_url: ""
+      sha256: ""
+  final:
+    - id: flux-1-dev
+      runtime: mlx
+      quant: fp8
+      steps: 28
+      license: flux-1-dev-non-commercial
+      commercial: false       # 商用需授权或换 schnell，见 PRD 风险
+      download_url: ""
+      sha256: ""
+    - id: qwen-image
+      runtime: mlx
+      quant: q4
+      steps: 28
+      license: apache-2.0
+      commercial: true
+      download_url: ""
+      sha256: ""
+  understanding:
+    - id: qwen3-8b-4bit
+      runtime: mlx
+      quant: q4
+      license: apache-2.0
+      commercial: true
+      download_url: ""
+      sha256: ""

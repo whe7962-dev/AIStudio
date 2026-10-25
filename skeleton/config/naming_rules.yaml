@@ -1,0 +1,5 @@
+# 导出命名规则（可编辑配置）。模型不得自造命名，只能取自本配置表。
+naming:
+  template: "{sku_id}_{channel_id}_{spec_id}{suffix}.{format}"
+  watermark_text: ""          # 默认无水印；用户可在导出请求中覆盖
+  manifest_filename: manifest.json
